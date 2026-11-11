@@ -9,7 +9,7 @@ export function suscribir(sala, rol, participante, req, res) {
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
   });
-  res.write(`retry: 2000\n: relleno ${' '.repeat(2048)}\n\n`);
+  res.write('retry: 2000\n\n');
   const cliente = { res, rol, participante, ultimo: '' };
   if (!clientes.has(sala.codigo)) clientes.set(sala.codigo, new Set());
   clientes.get(sala.codigo).add(cliente);

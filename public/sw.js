@@ -1,4 +1,4 @@
-const CACHE = 'retroscape-v2';
+const CACHE = 'retroscape-v1';
 const BASE = ['./', './index.html', './manifest.webmanifest', './css/app.css', './marca/icono.svg', './marca/logo.png', './marca/logo-claro.png', './fuentes/inter-latin-wght-normal.woff2', './fuentes/bricolage-grotesque-latin-wght-normal.woff2', './icons/icon-192.png',
   './js/main.js', './js/ui.js', './js/api.js', './js/perfil.js', './js/voz.js', './js/paisaje.js', './js/iconos.js',
   './js/vistas/inicio.js', './js/vistas/sala.js', './js/vistas/miembro.js', './js/vistas/facilitador.js', './js/vistas/compositor.js', './js/vistas/emociones.js',

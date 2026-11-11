@@ -22,14 +22,11 @@ export function conectarSala(codigo, token, { alEstado, alCaer, alVolver, alRech
     });
     es.onerror = async () => {
       if (cerrado) return;
+      if (!caido) { caido = true; alCaer?.(); }
       try {
-        const v = await pedir(`/api/salas/${encodeURIComponent(codigo)}/vista?token=${encodeURIComponent(token)}`);
-        if (cerrado) return;
-        if (caido) { caido = false; alVolver?.(); }
-        alEstado(v);
+        await pedir(`/api/salas/${encodeURIComponent(codigo)}/vista?token=${encodeURIComponent(token)}`);
       } catch (err) {
-        if (err.status === 401 || err.status === 404) { es.close(); cerrado = true; alRechazo?.(err); return; }
-        if (!caido) { caido = true; alCaer?.(); }
+        if (err.status === 401 || err.status === 404) { es.close(); cerrado = true; alRechazo?.(err); }
       }
     };
   };
