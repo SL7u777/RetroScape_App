@@ -1,0 +1,19 @@
+flowchart TB
+  classDef persona fill:#22184F,stroke:#22184F,color:#fff
+  classDef sistema fill:#3A2A7A,stroke:#22184F,color:#fff
+  classDef externo fill:#ECEAF2,stroke:#8F86AD,color:#22184F
+
+  miembro["<b>Miembro del equipo</b><br/>[Persona]<br/>Se coloca en el paisaje, comenta por voz o texto y vota.<br/>Incluye usuarios con discapacidad visual, del habla y neurodivergentes."]:::persona
+  sm["<b>Facilitador</b><br/>[Persona]<br/>Crea la sala, guía la sesión con Eco<br/>y revisa lo que propone la IA."]:::persona
+  po["<b>Product Owner / Agile Coach</b><br/>[Persona]<br/>Consulta el acta, las misiones<br/>y la evolución entre sprints."]:::persona
+
+  retro["<b>RetroScape</b><br/>[Sistema]<br/>PWA para retrospectivas ágiles con paisaje compartido,<br/>comentarios anónimos, votación con fichas y automatizaciones con IA."]:::sistema
+
+  llm["<b>Proveedor de LLM</b><br/>[Sistema externo]<br/>Gemini o Groq. Recibe solo texto sin autor."]:::externo
+  voz["<b>Servicios de voz del navegador</b><br/>[Sistema externo]<br/>Web Speech API y SpeechSynthesis."]:::externo
+
+  miembro -- "Participa" --> retro
+  sm -- "Facilita por pantalla o por voz" --> retro
+  po -- "Consulta resultados" --> retro
+  retro -- "Guardián, análisis, seguimiento,<br/>acta y Eco [HTTPS/JSON]" --> llm
+  retro -- "Dicta y lee en voz alta" --> voz

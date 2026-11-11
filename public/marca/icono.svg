@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="b-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3A2A7A"/><stop offset="1" stop-color="#22184F"/></linearGradient>
+    <clipPath id="b-in"><circle cx="128" cy="128" r="70"/></clipPath>
+  </defs>
+  <rect width="256" height="256" rx="60" fill="url(#b-bg)"/>
+  <path d="M128 36 A92 92 0 1 1 46.6 85" fill="none" stroke="#FFCF7A" stroke-width="14" stroke-linecap="round"/>
+  <path d="M55 107.5 L49.4 79.7 L23.2 90.7" fill="none" stroke="#FFCF7A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <g clip-path="url(#b-in)">
+    <rect x="40" y="40" width="180" height="180" fill="#F29E7C"/>
+    <circle cx="150" cy="118" r="22" fill="#FFE2A8"/>
+    <path d="M50 150 C85 120 110 130 130 145 C155 162 180 132 210 128 V210 H50Z" fill="#6E5CB8"/>
+    <path d="M50 175 C85 160 115 166 140 178 C170 192 195 172 210 168 V210 H50Z" fill="#2E9C8C"/>
+    <circle cx="96" cy="146" r="7" fill="#fff"/><circle cx="160" cy="166" r="7" fill="#fff"/>
+  </g>
+</svg>

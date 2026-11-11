@@ -1,0 +1,36 @@
+@startgantt gantt
+title RetroScape - Diagrama de Gantt del proyecto (CC451, 2026-2)
+language es
+printscale weekly zoom 4
+Project starts 2026-10-01
+skinparam defaultFontName Arial
+
+-- Fase 1: Análisis --
+[Selección del tema] as [T1] starts 2026-10-01 and ends 2026-10-02
+[Stakeholders y requerimientos (LEC06)] as [T2] starts 2026-10-03 and ends 2026-10-07
+-- Fase 2: Diseño --
+[Rediseño de casos de uso con SCAMPER (LEC07)] as [T3] starts 2026-10-08 and ends 2026-10-12
+[PACT, alternativas y prototipo de media fidelidad] as [T4] starts 2026-10-12 and ends 2026-10-14
+[Entrega del avance (PC2)] happens 2026-10-14
+-- Fase 3: Implementación --
+[Sprint 1: repositorio, PWA base, salas y sincronización] as [S1] starts 2026-10-15 and ends 2026-10-23
+[Sprint 2: paisaje, colocación y revelación (CU-02)] as [S2] starts 2026-10-26 and ends 2026-11-04
+[Sprint 3: comentarios por voz y texto (CU-03)] as [S3] starts 2026-11-05 and ends 2026-11-13
+[Sprint 4: análisis con LLM (CU-04) y votación (CU-05)] as [S4] starts 2026-11-16 and ends 2026-11-25
+[Sprint 5: perfil, accesibilidad, evolución y datos simulados] as [S5] starts 2026-11-26 and ends 2026-12-02
+-- Fase 4: Evaluación y cierre --
+[Prueba de usabilidad con 5 usuarios] as [E1] starts 2026-12-03 and ends 2026-12-04
+[Ajustes según la prueba] as [E2] starts 2026-12-07 and ends 2026-12-09
+[Documentación final y video] as [E3] starts 2026-12-07 and ends 2026-12-10
+[Exposición final] happens 2026-12-11
+
+[S1] is colored in #9DC3E6
+[S2] is colored in #9DC3E6
+[S3] is colored in #9DC3E6
+[S4] is colored in #9DC3E6
+[S5] is colored in #9DC3E6
+[T1] is colored in #A9D18E
+[T2] is colored in #A9D18E
+[T3] is colored in #A9D18E
+[T4] is colored in #F4B183
+@endgantt

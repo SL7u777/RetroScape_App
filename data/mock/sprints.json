@@ -1,0 +1,67 @@
+{
+  "equipo": {
+    "nombre": "Equipo Atlas",
+    "miembros": 6,
+    "duracionSprintDias": 14,
+    "nota": "Datos simulados para pruebas y demostraciones. Los comentarios no guardan autor."
+  },
+  "zonas": ["cima", "valle", "tormenta"],
+  "etiquetasRazon": ["carga", "comunicacion", "bloqueos", "logros", "herramientas", "otro"],
+  "sprints": [
+    {
+      "numero": 11,
+      "distribucion": { "cima": 1, "valle": 2, "tormenta": 3 },
+      "razones": { "carga": 3, "bloqueos": 2, "comunicacion": 1 },
+      "temas": ["Carga de trabajo", "Bloqueos con el entorno de pruebas"],
+      "misiones": [{ "texto": "Revisar la estimación de historias grandes", "fichas": 7 }],
+      "ideasCongeladas": []
+    },
+    {
+      "numero": 12,
+      "distribucion": { "cima": 1, "valle": 3, "tormenta": 2 },
+      "razones": { "bloqueos": 3, "comunicacion": 2, "logros": 1 },
+      "temas": ["Bloqueos con el entorno de pruebas", "Comunicación entre equipos", "Reuniones largas"],
+      "misiones": [{ "texto": "Crear un canal para avisos del entorno de pruebas", "fichas": 6 }],
+      "ideasCongeladas": [{ "texto": "Rotar al responsable de la daily", "fichas": 2 }]
+    },
+    {
+      "numero": 13,
+      "distribucion": { "cima": 2, "valle": 3, "tormenta": 1 },
+      "razones": { "bloqueos": 3, "logros": 2, "comunicacion": 1 },
+      "temas": ["Bloqueos con el entorno de pruebas", "Reuniones largas"],
+      "misiones": [
+        { "texto": "Reducir la daily a 15 minutos", "fichas": 6 },
+        { "texto": "Documentar el API antes de cada entrega", "fichas": 5 }
+      ],
+      "ideasCongeladas": [{ "texto": "Automatizar el despliegue a staging", "fichas": 4 }]
+    },
+    {
+      "numero": 14,
+      "distribucion": { "cima": 2, "valle": 3, "tormenta": 1 },
+      "razones": { "bloqueos": 3, "comunicacion": 2, "logros": 1 },
+      "comentarios": [
+        "Esta semana perdimos casi dos días esperando que el entorno de pruebas volviera a funcionar. Creo que deberíamos avisar antes cuando alguien lo modifica.",
+        "Nadie avisó que se cambió la configuración del servidor de pruebas.",
+        "Los despliegues fallaron tres veces por el mismo problema.",
+        "Nos enteramos tarde de los cambios del equipo de backend.",
+        "Faltó coordinar las fechas de la demo.",
+        "Las reuniones de planificación se alargan más de una hora."
+      ],
+      "temas": ["Bloqueos con el entorno de pruebas", "Comunicación entre equipos", "Reuniones largas"],
+      "acciones": [
+        { "texto": "Automatizar las pruebas antes de desplegar", "origen": "ia", "fichas": 8 },
+        { "texto": "Avisar en el canal antes de modificar el entorno de pruebas", "origen": "ia", "fichas": 5 },
+        { "texto": "Limitar la planificación a una hora", "origen": "ia", "fichas": 3 },
+        { "texto": "Definir criterios de terminado por historia", "origen": "equipo", "fichas": 2 }
+      ],
+      "misiones": [
+        { "texto": "Automatizar las pruebas antes de desplegar", "fichas": 8 },
+        { "texto": "Avisar en el canal antes de modificar el entorno de pruebas", "fichas": 5 }
+      ],
+      "ideasCongeladas": [
+        { "texto": "Limitar la planificación a una hora", "fichas": 3 },
+        { "texto": "Definir criterios de terminado por historia", "fichas": 2 }
+      ]
+    }
+  ]
+}

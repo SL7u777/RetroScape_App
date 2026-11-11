@@ -1,0 +1,81 @@
+@startuml interacciones
+title RetroScape - Diagrama de interacciones entre pantallas
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #1F4E79
+  FontColor #1A1A1A
+  ArrowColor #404040
+}
+hide empty description
+
+state "P01 Inicio" as P01
+state "P17 Preferencias" as P17 #EDF2F8
+
+state "CU-01 Sala" as S1 {
+  state "P02 Sala creada" as P02
+  state "P03 Unirse a una sala" as P03
+}
+state "CU-02 Expresar cómo viví el sprint" as S2 {
+  state "P04 Recordatorio del\nsprint anterior" as P04
+  state "P05 Colocación\nen el paisaje" as P05
+  state "P06 Colocación\nen celular" as P06
+  state "P07 Revelación" as P07
+}
+state "CU-03 Comentario anónimo" as S3 {
+  state "P08 Aportar comentario" as P08
+  state "P09 Dictado" as P09
+  state "P10 Vista previa" as P10
+  state "P11 Comentario publicado" as P11
+}
+state "CU-04 Análisis con LLM" as S4 {
+  state "P12 Borrador del análisis" as P12
+  state "P13 Agrupación manual" as P13
+}
+state "CU-05 Votación" as S5 {
+  state "P14 Votación con fichas" as P14
+  state "P15 Misiones adoptadas" as P15
+}
+state "CU-06 Evolución" as S6 {
+  state "P16 Evolución entre sprints" as P16
+}
+
+[*] --> P01
+P01 --> P02 : Crear sala\n[Scrum Master]
+P01 --> P03 : Unirse con código
+P01 --> P17 : Preferencias
+P17 --> P01 : Guardar
+P03 --> P03 : Código inválido\n(bloqueo tras 5 intentos)
+P03 --> P04 : Código válido\n[hay sprint anterior]
+P03 --> P05 : Código válido\n[primer sprint]
+P02 --> P04 : Iniciar retrospectiva
+P04 --> P05 : Continuar / Saltar
+P04 --> P06 : [pantalla pequeña]
+P05 --> P08 : Adelantar mi comentario\n(durante la espera)
+P05 --> P07 : Todos listos o vence el tiempo\n(cuenta regresiva)
+P06 --> P07 : Todos listos
+P07 --> P08 : Continuar a comentarios
+P08 --> P09 : Dictar
+P08 --> P10 : Escribir y revisar
+P09 --> P09 : Error de voz:\nrepetir o editar
+P09 --> P10 : Continuar
+P09 --> P08 : Cambiar a escritura\n(conserva el texto)
+P10 --> P08 : Editar
+P10 --> P11 : Publicar
+P11 --> P08 : Otro comentario
+P11 --> P12 : Facilitador cierra comentarios\n[Scrum Master]
+P12 --> P13 : LLM no responde\n→ Agrupar manualmente
+P13 --> P14 : Publicar al equipo
+P12 --> P14 : Publicar al equipo
+P14 --> P15 : Todos confirman, vence el tiempo\no cierre manual
+P15 --> P16 : Registrar misiones /\nVer evolución
+P16 --> P01 : Salir
+P16 --> [*]
+
+note right of P17
+  "¿Qué hago aquí?" (ayuda contextual)
+  y "Escuchar" (TTS) están disponibles
+  en todas las pantallas sin salir del flujo.
+end note
+@enduml

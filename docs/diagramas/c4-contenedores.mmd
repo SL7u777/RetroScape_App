@@ -1,0 +1,35 @@
+flowchart TB
+  classDef persona fill:#22184F,stroke:#22184F,color:#fff
+  classDef contenedor fill:#3A2A7A,stroke:#22184F,color:#fff
+  classDef datos fill:#2E9C8C,stroke:#1F6D62,color:#fff
+  classDef externo fill:#ECEAF2,stroke:#8F86AD,color:#22184F
+
+  usuario["<b>Participante</b><br/>[Persona]<br/>Miembro, facilitador o Product Owner"]:::persona
+  sala["<b>Sala presencial</b><br/>Proyector y parlante"]:::persona
+
+  subgraph retro["RetroScape"]
+    pwa["<b>PWA</b><br/>[HTML, CSS, JavaScript]<br/>Paisaje, comentarios, análisis, votación,<br/>acta, Eco y evolución"]:::contenedor
+    proy["<b>Vista del proyector</b><br/>[Misma PWA, solo lectura]<br/>Información agregada y subtítulos de Eco"]:::contenedor
+    sw["<b>Service Worker</b><br/>[JavaScript]<br/>Caché de interfaz y fuentes"]:::contenedor
+    perfil[("<b>Perfil local</b><br/>[localStorage]<br/>Preferencias, dictado, emociones<br/>y posiciones anteriores")]:::datos
+    api["<b>Servidor</b><br/>[Node.js, sin dependencias]<br/>API REST, fases y reglas de privacidad"]:::contenedor
+    rt["<b>Canal en tiempo real</b><br/>[Server-Sent Events]<br/>Cada rol recibe solo su vista"]:::contenedor
+    ia["<b>Capa de IA</b><br/>[Node.js]<br/>Adaptadores Gemini, Groq y simulado;<br/>prompts y validación de respuestas"]:::contenedor
+    db[("<b>Almacenamiento</b><br/>[Archivo JSON]<br/>Salas, comentarios sin autor, votos,<br/>misiones e historial")]:::datos
+  end
+
+  llm["<b>Proveedor de LLM</b><br/>[Gemini o Groq]"]:::externo
+  voz["<b>Web Speech API</b><br/>[Navegador]"]:::externo
+
+  usuario --> pwa
+  sala --> proy
+  pwa --> sw
+  pwa -- "Lee y actualiza" --> perfil
+  pwa -- "Dicta y escucha" --> voz
+  pwa -- "Acciones [HTTP/JSON]" --> api
+  pwa -- "Se suscribe [SSE]" --> rt
+  proy -- "Se suscribe [SSE]" --> rt
+  api -- "Lee y escribe" --> db
+  api -- "Pide revisión, análisis,<br/>seguimiento, acta e intención" --> ia
+  ia -- "Texto sin autor [HTTPS]" --> llm
+  style retro fill:#F7F5FC,stroke:#8F86AD,color:#22184F

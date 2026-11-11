@@ -1,0 +1,16 @@
+{
+  "name": "RetroScape",
+  "short_name": "RetroScape",
+  "description": "Retrospectivas ágiles con un paisaje compartido del equipo.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F0F7",
+  "theme_color": "#22184F",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
