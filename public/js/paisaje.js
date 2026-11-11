@@ -59,7 +59,19 @@ function figura(x, y, { propio, nombre, silueta, demora, escala = 1.3 }) {
   return g;
 }
 
-export function paisaje({ avatares = [], distribucion = null, revelada = false, interactivo = false, elegida = null, alElegir, silueta = null, animar = false, compacto = false, titulo = 'Paisaje del equipo' } = {}) {
+const MASTILES = [[610, 456], [470, 468], [760, 448], [880, 454]];
+
+function bandera(x, y, numero, texto, k) {
+  const g = svg('g', { transform: `translate(${x} ${y}) scale(${k})`, role: 'img', 'aria-label': `Misión ${numero}: ${texto}` });
+  g.append(svg('g', { class: 'mision', style: `--d:${(numero - 1) * 180}ms` },
+    svg('ellipse', { cx: 0, cy: 1, rx: 10, ry: 3, fill: 'rgba(20,14,50,.3)' }),
+    svg('rect', { x: -2, y: -96, width: 4, height: 96, rx: 2, fill: '#22184F' }),
+    svg('path', { d: 'M2 -94H58L46 -76L58 -58H2Z', fill: '#FFCF7A', stroke: '#22184F', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }),
+    svg('text', { x: 24, y: -68, 'text-anchor': 'middle', 'font-size': 24, 'font-weight': 700, fill: '#22184F', 'font-family': 'Bricolage Grotesque, Inter, sans-serif' }, String(numero))));
+  return g;
+}
+
+export function paisaje({ avatares = [], distribucion = null, revelada = false, interactivo = false, elegida = null, alElegir, silueta = null, animar = false, compacto = false, misiones = [], titulo = 'Paisaje del equipo' } = {}) {
   const escala = compacto ? 2 : 1.3;
   const k = compacto ? 1.55 : 1;
   const id = `p${++instancia}`;
@@ -117,6 +129,8 @@ export function paisaje({ avatares = [], distribucion = null, revelada = false, 
     }
     raiz.append(g);
   }
+
+  misiones.slice(0, MASTILES.length).forEach((m, i) => raiz.append(bandera(...MASTILES[i], i + 1, m.texto, compacto ? 1.5 : 1)));
 
   if (silueta && PUESTOS[silueta]) {
     const [x, y] = PUESTOS[silueta][2];

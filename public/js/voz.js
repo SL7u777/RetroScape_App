@@ -3,8 +3,8 @@ export const hayDictado = !!Reconocimiento;
 export const hayLectura = 'speechSynthesis' in window;
 const idioma = navigator.language?.startsWith('es') ? navigator.language : 'es-PE';
 
-// Dictado del navegador; se detiene solo tras un silencio de `espera` ms
-export function dictar({ alParcial, alFinal, alError, espera = 1800 }) {
+// Dictado del navegador; espera hasta `inicio` ms a que la persona empiece y se detiene tras un silencio de `espera` ms
+export function dictar({ alParcial, alFinal, alError, espera = 1800, inicio = 7000 }) {
   if (!hayDictado) { alError?.('no-disponible'); return () => {}; }
   const r = new Reconocimiento();
   r.lang = idioma;
@@ -13,20 +13,34 @@ export function dictar({ alParcial, alFinal, alError, espera = 1800 }) {
   let texto = '';
   let silencio;
   let terminado = false;
-  const reiniciarSilencio = () => { clearTimeout(silencio); silencio = setTimeout(() => r.stop(), espera); };
+  let pedido = false;
+  let pendiente = '';
+  let reinicios = 0;
+  const parar = () => { pedido = true; try { r.stop(); } catch { /* ya terminó */ } };
+  const reiniciarSilencio = (ms = espera) => { clearTimeout(silencio); silencio = setTimeout(parar, ms); };
   r.onresult = e => {
     let parcial = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) texto += e.results[i][0].transcript + ' ';
       else parcial += e.results[i][0].transcript;
     }
+    pendiente = parcial;
     alParcial?.((texto + parcial).trim());
     reiniciarSilencio();
   };
   r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') { terminado = true; alError?.(e.error, texto.trim()); } };
-  r.onend = () => { clearTimeout(silencio); if (!terminado) { terminado = true; alFinal?.(texto.trim()); } };
-  try { r.start(); reiniciarSilencio(); } catch { alError?.('ocupado'); }
-  return () => { try { r.stop(); } catch { /* ya terminó */ } };
+  // Chrome a veces cierra el reconocimiento por su cuenta: se retoma hasta que haya silencio de verdad
+  r.onend = () => {
+    if (pendiente) { texto += pendiente + ' '; pendiente = ''; }
+    if (!pedido && !terminado && reinicios < 6) {
+      reinicios++;
+      try { r.start(); return; } catch { /* no se pudo retomar */ }
+    }
+    clearTimeout(silencio);
+    if (!terminado) { terminado = true; alFinal?.(texto.trim()); }
+  };
+  try { r.start(); reiniciarSilencio(Math.max(inicio, espera)); } catch { alError?.('ocupado'); }
+  return parar;
 }
 
 export const mensajeErrorVoz = codigo => ({

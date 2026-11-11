@@ -100,7 +100,8 @@ export function eco({ texto, estado, pendiente }) {
   const min = /(\d+|un|uno|dos|tres|cuatro|cinco|diez) minut/.exec(t);
   if (min) {
     const n = { un: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, diez: 10 }[min[1]] || Number(min[1]);
-    return r('temporizador', `Temporizador de ${n} minutos.`, `Quedan ${n} minutos`, '', { minutos: n });
+    const sumar = /\b(mas|otros?|extra|adicional(es)?)\b/.test(t) && estado?.temporizador_segundos != null;
+    return r('temporizador', `Temporizador de ${n} minutos.`, `Quedan ${n} minutos`, '', sumar ? { minutos: n, sumar: true } : { minutos: n });
   }
   if (/analiz|agrupa|cierra (los )?comentarios/.test(t)) return r('analizar', 'Cierro los comentarios y preparo el análisis.');
   if (/publica|abre la votacion|a votar/.test(t)) return r('publicar_analisis', 'Abro la votación.');

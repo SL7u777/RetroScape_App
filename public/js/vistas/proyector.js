@@ -77,10 +77,11 @@ export function vistaProyector(app, codigo, token) {
     fase.textContent = v.sala.faseNombre;
     const animar = v.revelada && reveladaAntes === false;
     if (animar) reveladaAntes = true;
-    const f = JSON.stringify([v.avatares, v.revelada, v.distribucion]);
+    const misiones = ['cierre', 'cerrada'].includes(v.sala.fase) ? v.misiones || [] : [];
+    const f = JSON.stringify([v.avatares, v.revelada, v.distribucion, misiones.map(m => m.texto)]);
     if (f !== firma || animar) {
       firma = f;
-      marco.replaceChildren(paisaje({ avatares: v.avatares, distribucion: v.distribucion, revelada: v.revelada, animar, titulo: 'Paisaje del equipo' }));
+      marco.replaceChildren(paisaje({ avatares: v.avatares, distribucion: v.distribucion, revelada: v.revelada, animar, misiones, titulo: 'Paisaje del equipo' }));
     }
     const c = contenido();
     if (c.principal) { montar(principal, c.principal); montar(lateral, marco, c.lateral); }

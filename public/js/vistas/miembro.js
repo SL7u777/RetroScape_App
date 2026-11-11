@@ -19,7 +19,7 @@ export function recordatorio(v) {
 export function estandartes(misiones) {
   if (!misiones.length) return h('p', { class: 'suave' }, 'Ninguna acción recibió fichas.');
   return h('div', { class: 'estandartes', role: 'list' }, misiones.map((m, i) => h('div', { class: 'estandarte', role: 'listitem', style: { '--i': i } },
-    icono('bandera'),
+    h('span', { class: 'num', 'aria-hidden': 'true' }, String(i + 1)),
     h('div', null, h('b', null, m.texto), h('span', { class: 'chico' }, `${plural(m.fichas, 'ficha', 'fichas')}${m.responsable ? `. Responsable: ${m.responsable}` : ''}`)))));
 }
 

@@ -151,11 +151,19 @@ export function comentar(sala, { texto, marcado }) {
   cambio(sala);
 }
 
-export function temporizador(sala, minutos) {
+export function temporizador(sala, minutos, sumar = false) {
   if (!['colocacion', 'comentarios', 'votacion'].includes(sala.fase)) throw new ErrorSala('En esta fase no hay temporizador');
   const m = Math.round(Number(minutos));
-  sala.temporizador = m > 0 ? { fin: Date.now() + Math.min(30, m) * 60000, minutos: Math.min(30, m), fase: sala.fase } : null;
+  const ahora = Date.now();
+  const activo = sala.temporizador && sala.temporizador.fin > ahora ? sala.temporizador : null;
+  if (sumar && activo && m > 0) {
+    const fin = Math.min(ahora + 30 * 60000, activo.fin + m * 60000);
+    sala.temporizador = { fin, minutos: Math.max(1, Math.round((fin - ahora) / 60000)), fase: sala.fase };
+  } else {
+    sala.temporizador = m > 0 ? { fin: ahora + Math.min(30, m) * 60000, minutos: Math.min(30, m), fase: sala.fase } : null;
+  }
   cambio(sala);
+  return sala.temporizador ? Math.round((sala.temporizador.fin - ahora) / 60000) : 0;
 }
 
 export function revisarTiempos() {
@@ -486,7 +494,11 @@ function motivoConfirmacion(sala, accion) {
 
 function ejecutar(sala, accion, args) {
   if (accion === 'revelar') revelar(sala);
-  else if (accion === 'temporizador') temporizador(sala, args.minutos);
+  else if (accion === 'temporizador') {
+    const habia = !!(sala.temporizador && sala.temporizador.fin > Date.now());
+    args.quedan = temporizador(sala, args.minutos, args.sumar);
+    args.sumado = !!args.sumar && habia;
+  }
   else if (accion === 'analizar') analizar(sala);
   else if (accion === 'publicar_analisis') publicarAnalisis(sala);
   else if (accion === 'cerrar_votacion') cerrarVotacion(sala);
@@ -495,7 +507,7 @@ function ejecutar(sala, accion, args) {
 
 const HECHO = {
   revelar: 'Revelando el paisaje.',
-  temporizador: a => `Temporizador de ${plural(a.minutos, 'minuto', 'minutos')}.`,
+  temporizador: a => (a.sumado ? `Sumé ${plural(a.minutos, 'minuto', 'minutos')}. Quedan unos ${a.quedan}.` : `Temporizador de ${plural(a.minutos, 'minuto', 'minutos')}.`),
   analizar: 'Cierro los comentarios. El borrador del análisis llegará a tu pantalla.',
   publicar_analisis: 'Listo, la votación está abierta.',
   cerrar_votacion: 'Votación cerrada. Estas son las misiones.',
@@ -555,7 +567,8 @@ export async function eco(sala, texto, vozEn) {
   }
   try {
     ejecutar(sala, r.accion, r.args);
-    return responderEco(sala, { voz: r.voz || hecho(r.accion, r.args), proyector: r.proyector, celular: r.celular, pendiente: null });
+    const sumado = r.accion === 'temporizador' && r.args.sumado;
+    return responderEco(sala, { voz: sumado ? hecho(r.accion, r.args) : r.voz || hecho(r.accion, r.args), proyector: sumado ? `Quedan unos ${plural(r.args.quedan, 'minuto', 'minutos')}` : r.proyector, celular: r.celular, pendiente: null });
   } catch (e) {
     return responderEco(sala, { voz: e.message, proyector: '', celular: '' });
   }

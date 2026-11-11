@@ -129,12 +129,13 @@ export function vistaSala(app, codigo, tokenFacilitador) {
     const avatares = colocando ? [] : v.avatares;
     const animar = v.revelada && reveladaAntes === false && !vioRevelacion;
     const compacto = pantallaChica.matches;
-    const firma = JSON.stringify([avatares, v.revelada, v.distribucion, colocando, elegida, anterior?.zona, compacto]);
+    const misiones = ['cierre', 'cerrada'].includes(v.sala.fase) ? v.misiones || [] : [];
+    const firma = JSON.stringify([avatares, v.revelada, v.distribucion, colocando, elegida, anterior?.zona, compacto, misiones.map(m => m.texto)]);
     if (firma === firmaPaisaje && !animar) return;
     firmaPaisaje = firma;
     if (animar) vioRevelacion = true;
     const svgPaisaje = paisaje({
-      avatares, distribucion: v.distribucion, revelada: v.revelada, interactivo: colocando, elegida, silueta: anterior?.zona, compacto,
+      avatares, distribucion: v.distribucion, revelada: v.revelada, interactivo: colocando, elegida, silueta: anterior?.zona, compacto, misiones,
       animar, alElegir: zona => { local.seleccion = zona; render(true); },
       titulo: v.revelada ? `Paisaje revelado: ${resumenDistribucion(v.distribucion)}` : 'Paisaje del equipo. Las posiciones se revelan a la vez.',
     });

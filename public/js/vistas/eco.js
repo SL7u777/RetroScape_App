@@ -48,7 +48,7 @@ export function montarEco(app, ctx) {
     mic.classList.add('escuchando');
     entrada.placeholder = 'Te escucho…';
     detener = dictar({
-      espera: 1200,
+      espera: 2000,
       alParcial: t => { entrada.value = t; },
       alFinal: t => { fin(); if (t) enviar(t); },
       alError: c => { fin(); aviso(mensajeErrorVoz(c), 'error'); },

@@ -115,6 +115,17 @@ test('Eco no ejecuta acciones fuera de su fase', async () => {
   assert.match(r.voz, /Ahora no puedo/);
 });
 
+test('Eco suma tiempo al temporizador en curso en vez de reemplazarlo', async () => {
+  const { sala } = nuevaSala();
+  await S.eco(sala, 'pon tres minutos', 'facilitador');
+  const antes = sala.temporizador.fin;
+  const r = await S.eco(sala, 'dales cinco minutos más', 'facilitador');
+  assert.ok(Math.abs(sala.temporizador.fin - antes - 5 * 60000) < 1000);
+  assert.match(r.voz, /Sumé 5 minutos\. Quedan unos 8/);
+  await S.eco(sala, 'pon dos minutos', 'facilitador');
+  assert.ok(sala.temporizador.fin - Date.now() <= 2 * 60000);
+});
+
 test('al vencer el tiempo de colocación se revela y se avisa', () => {
   const { sala, miembros: [ana] } = nuevaSala();
   S.colocar(sala, ana, { zona: 'cima' });
