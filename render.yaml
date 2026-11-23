@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: retroscape
+    runtime: node
+    plan: free
+    buildCommand: echo "sin dependencias"
+    startCommand: npm start
+    healthCheckPath: /api/estado
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: CONFIAR_PROXY
+        value: "1"
+      - key: IA_PROVEEDOR
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false

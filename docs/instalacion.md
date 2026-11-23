@@ -60,6 +60,17 @@ Abre la primera dirección en la laptop. Los demás entran desde su celular o la
 5. **Eco:** el botón *Eco* en la cabecera del facilitador. Toca el micrófono y habla, o escribe.
 6. **Facilitar desde el celular:** si la laptop queda conectada al proyector, en el panel del facilitador elige *Facilitar desde mi celular* y abre ese enlace en tu teléfono. Así usas Eco y ves la información privada desde ahí. No compartas ese enlace con el equipo: da control de la sala.
 
+## Publicarla en Render
+
+Para que el equipo entre desde cualquier red, con HTTPS (necesario para el dictado por voz en el celular), basta un servicio web gratuito de [Render](https://render.com). El mismo servidor entrega la página y la API, así que no hace falta nada más.
+
+1. Sube el repositorio a GitHub (incluye `render.yaml`).
+2. En Render: *New → Blueprint*, elige el repositorio y confirma.
+3. Cuando lo pida, pega la clave en `GROQ_API_KEY`. Para usar Gemini, cambia `IA_PROVEEDOR` a `gemini` y agrega `GEMINI_API_KEY`.
+4. Al terminar el despliegue, Render muestra la dirección `https://retroscape-xxxx.onrender.com`. Ábrela en la laptop, crea la sala desde ahí y el equipo entra con esa misma dirección.
+
+El plan gratuito apaga el servicio tras 15 minutos sin tráfico y la primera carga posterior tarda cerca de un minuto, así que conviene abrir la dirección unos minutos antes de empezar. Las salas se guardan en el disco del servicio, que se borra al reiniciarse: el historial del Equipo Atlas vuelve a cargarse, pero una sala creada antes de un apagado se pierde.
+
 ## 4. Demostración sin público
 
 Con la sala creada, en otra consola:

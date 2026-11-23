@@ -76,7 +76,7 @@ async function accion(sala, rol, p, d) {
 
 async function api(req, res, url) {
   const ruta = url.pathname.replace(/\/+$/, '');
-  const ip = req.socket.remoteAddress;
+  const ip = (process.env.CONFIAR_PROXY === '1' && req.headers['x-forwarded-for']?.split(',')[0].trim()) || req.socket.remoteAddress;
 
   if (req.method === 'GET' && ruta === '/api/estado') return enviar(res, 200, { ia: infoIA(), red: direccionesRed().map(ip => `${ip}:${config.puerto}`) });
 
