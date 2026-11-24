@@ -1,6 +1,6 @@
 import { h, montar, renderConservando, aviso, anunciar, plural, ZONAS, RAZONES, resumenDistribucion, direccionSala } from '../ui.js';
 import { conectarSala, accion as enviarAccion } from '../api.js';
-import { credencial, perfil, guardarPerfil, posicionAnterior, guardarCredencial } from '../perfil.js';
+import { credencial, perfil, guardarPerfil, posicionAnterior, guardarCredencial, logo } from '../perfil.js';
 import { paisaje, nombreClima } from '../paisaje.js';
 import { icono } from '../iconos.js';
 import { panelMiembro } from './miembro.js';
@@ -40,7 +40,7 @@ function pedirNombre(app, codigo) {
   const nombre = h('input', { class: 'input', id: 'nombre', maxlength: 30, value: perfil().nombre, autocomplete: 'given-name' });
   const error = h('p', { class: 'nota error oculto', role: 'alert' });
   montar(app, h('main', { id: 'principal', class: 'pagina', style: { maxWidth: '480px', paddingTop: '12vh' } },
-    h('img', { src: 'marca/logo.png', alt: 'RetroScape', width: 160, height: 48 }),
+    h('img', { src: logo(), 'data-logo': '', alt: 'RetroScape', width: 160, height: 48 }),
     h('form', { class: 'tarjeta destacada', onsubmit: async e => {
       e.preventDefault();
       try { await entrarASala(codigo, nombre.value.trim()); } catch (err) { error.textContent = err.message; error.classList.remove('oculto'); }

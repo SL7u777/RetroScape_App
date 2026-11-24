@@ -1,4 +1,4 @@
-import { h, plural, ORIGEN, resumenDistribucion, markdownSimple, aviso, direccionSala } from '../ui.js';
+import { h, plural, ORIGEN, resumenDistribucion, markdownSimple, aviso, direccionSala, confirmar } from '../ui.js';
 import { icono } from '../iconos.js';
 import { recordatorio, estandartes, temasPublicados, botonEscuchar } from './miembro.js';
 
@@ -34,7 +34,31 @@ function invitar(ctx) {
         try { await navigator.clipboard.writeText(propio); aviso('Enlace copiado. Ábrelo en tu celular para usar Eco desde ahí.'); } catch { window.prompt('Copia este enlace y ábrelo en tu celular:', propio); }
       } }, icono('copiar'), 'Facilitar desde mi celular')),
     h('p', { class: 'chico suave' }, 'Ese enlace da control de la sala: no lo compartas con el equipo.'),
-    v.integrantes.length ? h('p', { class: 'chico' }, `En la sala: ${v.integrantes.join(', ')}.`) : h('p', { class: 'chico suave' }, 'Todavía no entra nadie.'));
+    miembrosSala(ctx));
+}
+
+function miembrosSala(ctx) {
+  const lista = ctx.v.miembros || [];
+  if (!lista.length) return h('p', { class: 'chico suave' }, 'Todavía no entra nadie.');
+  const enLinea = lista.filter(m => m.activo).length;
+  return h('div', { class: 'pila g8' },
+    h('span', { class: 'chico', style: { fontWeight: 600 } }, `En la sala: ${enLinea} de ${lista.length} conectados`),
+    h('ul', { class: 'miembros' }, lista.map(m => h('li', { class: m.activo ? '' : 'ausente' },
+      h('span', { class: 'presencia', 'aria-hidden': 'true' }),
+      h('span', { class: 'nombre' }, m.nombre, h('span', { class: 'sr' }, m.activo ? ', conectado' : ', desconectado')),
+      m.activo ? null : h('span', { class: 'chico suave' }, 'Se desconectó'),
+      h('button', { type: 'button', class: 'btn chico texto quitar', 'aria-label': `Quitar a ${m.nombre} de la sala`, onclick: async () => {
+        const antes = ctx.v.sala.fase === 'colocacion' && !ctx.v.revelacion;
+        const ok = await confirmar({
+          titulo: `¿Quitar a ${m.nombre} de la sala?`,
+          texto: antes
+            ? 'Saldrá de la retro y su posición no contará en el paisaje. Si vuelve a entrar con el código, entrará como alguien nuevo.'
+            : 'Saldrá de la retro y ya no podrá participar. Lo que ya aportó sigue siendo anónimo y se mantiene.',
+          aceptar: 'Quitar', peligro: true,
+        });
+        if (!ok) return;
+        if (await ctx.accion('expulsar', { id: m.id })) aviso(`${m.nombre} salió de la sala`);
+      } }, 'Quitar')))));
 }
 
 function colocacion(ctx) {

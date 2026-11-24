@@ -1,5 +1,5 @@
 import { h, montar, aviso } from '../ui.js';
-import { perfil, guardarPerfil } from '../perfil.js';
+import { perfil, guardarPerfil, logo } from '../perfil.js';
 import { icono } from '../iconos.js';
 import { hayDictado } from '../voz.js';
 
@@ -13,7 +13,7 @@ export function vistaPreferencias(app) {
     const ultimas = p.emociones.slice(-8).reverse();
 
     montar(app, h('main', { id: 'principal', class: 'pagina', style: { maxWidth: '760px' } },
-      h('div', { class: 'pagina-top' }, h('button', { type: 'button', class: 'btn texto chico', onclick: () => (history.length > 1 ? history.back() : (location.hash = '#/')) }, icono('atras'), 'Volver'), h('img', { src: 'marca/logo.png', alt: 'RetroScape', width: 120, height: 36 })),
+      h('div', { class: 'pagina-top' }, h('button', { type: 'button', class: 'btn texto chico', onclick: () => (history.length > 1 ? history.back() : (location.hash = '#/')) }, icono('atras'), 'Volver'), h('img', { src: logo(), 'data-logo': '', alt: 'RetroScape', width: 120, height: 36 })),
       h('div', { class: 'pila g8' }, h('h1', null, 'Preferencias'), h('p', { class: 'suave' }, 'Se guardan en este dispositivo y se aplican en todas tus retros. No necesitas cuenta.')),
       p.nuevo ? h('p', { class: 'nota' }, 'Estás usando los valores por defecto. Ajústalos cuando quieras.') : null,
 
@@ -21,6 +21,8 @@ export function vistaPreferencias(app) {
         h('h2', null, 'Lectura'),
         h('div', { class: 'pila g8' }, h('span', { class: 'chico', style: { fontWeight: 600 } }, 'Tamaño del texto'),
           h('div', { class: 'opciones' }, [[1, 'Normal'], [1.15, 'Grande'], [1.3, 'Muy grande']].map(([n, t]) => h('button', { type: 'button', class: 'opcion', 'aria-pressed': String(p.prefs.texto === n), onclick: () => pref('texto', n) }, t)))),
+        h('div', { class: 'pila g8' }, h('span', { class: 'chico', style: { fontWeight: 600 } }, 'Apariencia'),
+          h('div', { class: 'opciones' }, [['sistema', 'Como el dispositivo'], ['claro', 'Claro'], ['oscuro', 'Oscuro']].map(([n, t]) => h('button', { type: 'button', class: 'opcion', 'aria-pressed': String((p.prefs.tema || 'sistema') === n), onclick: () => pref('tema', n) }, t)))),
         h('div', { class: 'zonas' },
           interruptor('contraste', 'Alto contraste', 'Textos y bordes más marcados.'),
           interruptor('sinAnimacion', 'Sin animaciones', 'El paisaje y las fichas no se mueven.'),

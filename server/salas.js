@@ -12,7 +12,7 @@ export const FASES = { colocacion: 'Colocación', comentarios: 'Comentarios', an
 const FICHAS = 3;
 const MIN_ANONIMATO = 3;
 const CUENTA_MS = 3500;
-const ACTIVO_MS = 45000;
+const ACTIVO_MS = 20000;
 
 export class ErrorSala extends Error {
   constructor(mensaje, status = 400) { super(mensaje); this.status = status; }
@@ -73,7 +73,7 @@ export function unirse(codigo, nombre) {
   if (!n) throw new ErrorSala('Escribe tu nombre');
   const usados = new Set(Object.values(sala.participantes).map(p => p.nombre.toLowerCase()));
   for (let i = 2; usados.has(n.toLowerCase()); i++) n = `${limpiar(nombre, 27)} ${i}`;
-  const p = { id: `p${Object.keys(sala.participantes).length + 1}`, token: randomUUID(), nombre: n, conexiones: 0, vistoEn: Date.now(), zona: null, razones: [], mostrarNombre: false, votos: {}, votoConfirmado: false };
+  const p = { id: `p${randomUUID().slice(0, 8)}`, token: randomUUID(), nombre: n, conexiones: 0, vistoEn: Date.now(), zona: null, razones: [], mostrarNombre: false, votos: {}, votoConfirmado: false };
   sala.participantes[p.id] = p;
   cambio(sala);
   return { token: p.token, id: p.id, nombre: n, codigo: sala.codigo };
@@ -83,6 +83,7 @@ export function autenticar(sala, token) {
   if (token && token === sala.facilitador.token) return { rol: 'facilitador', participante: null };
   if (token && token === sala.proyectorToken) return { rol: 'proyector', participante: null };
   const p = Object.values(sala.participantes).find(x => x.token === token);
+  if (!p && sala.expulsados?.includes(token)) throw new ErrorSala('Quien facilita te quitó de esta sala. Si fue un error, pídele el código y vuelve a entrar.', 401);
   if (!p) throw new ErrorSala('No tienes acceso a esta sala', 401);
   p.vistoEn = Date.now();
   return { rol: 'miembro', participante: p };
@@ -166,8 +167,40 @@ export function temporizador(sala, minutos, sumar = false) {
   return sala.temporizador ? Math.round((sala.temporizador.fin - ahora) / 60000) : 0;
 }
 
+const presencias = new Map();
+function revisarPresencia(sala) {
+  const firma = lista(sala).map(p => p.id + (activo(p) ? '+' : '-')).join();
+  if (presencias.get(sala.codigo) === firma) return;
+  const habia = presencias.has(sala.codigo);
+  presencias.set(sala.codigo, firma);
+  if (!habia) return;
+  const pr = progreso(sala);
+  if (sala.fase === 'colocacion' && !sala.revelacion && pr.colocados >= MIN_ANONIMATO && pr.pendientes === 0) { revelar(sala); return; }
+  notificar(sala);
+}
+
+export function expulsar(sala, id) {
+  const p = sala.participantes[id];
+  if (!p || p.expulsado) throw new ErrorSala('Esa persona ya no está en la sala');
+  if (sala.fase === 'cerrada') throw new ErrorSala('La retrospectiva ya se cerró');
+  sala.expulsados = [...(sala.expulsados || []), p.token].slice(-50);
+  if (sala.fase === 'colocacion' && !sala.revelacion) delete sala.participantes[id];
+  else {
+    p.expulsado = true;
+    p.token = randomUUID();
+    p.conexiones = 0;
+    p.vistoEn = 0;
+    if (!p.votoConfirmado) p.votos = {};
+  }
+  const pr = progreso(sala);
+  if (sala.fase === 'colocacion' && !sala.revelacion && pr.colocados >= MIN_ANONIMATO && pr.pendientes === 0) revelar(sala);
+  else cambio(sala);
+  return p.nombre;
+}
+
 export function revisarTiempos() {
   for (const sala of Object.values(db().salas)) {
+    if (sala.fase !== 'cerrada') revisarPresencia(sala);
     const t = sala.temporizador;
     if (!t || Date.now() < t.fin) continue;
     sala.temporizador = null;
@@ -582,7 +615,7 @@ export async function eco(sala, texto, vozEn) {
 
 export function conexion(sala, participanteId, delta) {
   const p = sala.participantes[participanteId];
-  if (!p) return;
+  if (!p || p.expulsado) return;
   p.conexiones = Math.max(0, p.conexiones + delta);
   p.vistoEn = Date.now();
 }
@@ -627,7 +660,12 @@ export function vista(sala, rol, p) {
   } else if (p?.zona) {
     v.avatares = [{ zona: p.zona, nombre: null, propio: true }];
   }
-  if (esFac) { v.integrantes = lista(sala).map(x => x.nombre); v.proyectorToken = sala.proyectorToken; }
+  if (esFac) {
+    const presentes = lista(sala).filter(x => !x.expulsado);
+    v.integrantes = presentes.map(x => x.nombre);
+    v.miembros = presentes.map(x => ({ id: x.id, nombre: x.nombre, activo: activo(x) }));
+    v.proyectorToken = sala.proyectorToken;
+  }
 
   if (esFac && ['borrador', 'procesando', 'error'].includes(a.estado)) {
     v.analisis = {

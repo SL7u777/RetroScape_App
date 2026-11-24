@@ -3,7 +3,7 @@ const SALAS = 'retroscape.salas';
 
 const BASE = {
   nombre: '',
-  prefs: { texto: 1, contraste: false, enfoque: false, sinAnimacion: false, vozEco: 'este' },
+  prefs: { texto: 1, contraste: false, enfoque: false, sinAnimacion: false, vozEco: 'este', tema: 'sistema' },
   dictado: { espera: 1800, correcciones: 0, sugerenciaVista: false },
   historial: {},
   emociones: [],
@@ -31,8 +31,17 @@ export function guardarPerfil(cambios) {
   return p;
 }
 
+const sistemaOscuro = window.matchMedia?.('(prefers-color-scheme: dark)');
+export const temaOscuro = (prefs = perfil().prefs) => prefs.tema === 'oscuro' || (prefs.tema !== 'claro' && !!sistemaOscuro?.matches);
+export const logo = () => (document.documentElement.classList.contains('oscuro') ? 'marca/logo-claro.png' : 'marca/logo.png');
+sistemaOscuro?.addEventListener?.('change', () => aplicarPreferencias());
+
 export function aplicarPreferencias(prefs = perfil().prefs) {
   const r = document.documentElement;
+  const oscuro = temaOscuro(prefs);
+  r.classList.toggle('oscuro', oscuro);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', oscuro ? '#141028' : '#22184F');
+  document.querySelectorAll('img[data-logo]').forEach(img => { img.src = logo(); });
   r.style.setProperty('--escala', prefs.texto || 1);
   r.classList.toggle('contraste', !!prefs.contraste);
   r.classList.toggle('sin-animacion', !!prefs.sinAnimacion || !!prefs.enfoque);
@@ -59,6 +68,11 @@ export function registrarEmocion(emocion, sprint) {
 
 export const salasGuardadas = () => leer(SALAS, {});
 export const credencial = codigo => salasGuardadas()[codigo] || null;
+export function olvidarSala(codigo) {
+  const s = salasGuardadas();
+  delete s[codigo];
+  escribir(SALAS, s);
+}
 export function guardarCredencial(codigo, datos) {
   const s = salasGuardadas();
   s[codigo] = { ...datos, fecha: Date.now() };

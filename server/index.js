@@ -5,7 +5,7 @@ import { networkInterfaces } from 'node:os';
 import { config, RAIZ } from './config.js';
 import { cargar, datos } from './store.js';
 import * as S from './salas.js';
-import { suscribir, emitir } from './eventos.js';
+import { suscribir, emitir, cerrarParticipante } from './eventos.js';
 import { revisar as revisarGuardian } from './ia/guardian.js';
 import { infoIA } from './ia/gateway.js';
 
@@ -69,6 +69,7 @@ async function accion(sala, rol, p, d) {
     case 'generarActa': return S.generarActa(sala);
     case 'editarActa': return S.editarActa(sala, d.texto);
     case 'cerrarRetro': return S.cerrarRetro(sala);
+    case 'expulsar': { const r = S.expulsar(sala, d.id); cerrarParticipante(sala.codigo, d.id); return r; }
     case 'ecoConfirmar': return S.ecoBoton(sala, true, d.vozEn);
     case 'ecoCancelar': return S.ecoBoton(sala, false, d.vozEn);
     default: throw new S.ErrorSala('Acción desconocida');

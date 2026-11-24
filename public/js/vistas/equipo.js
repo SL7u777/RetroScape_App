@@ -1,3 +1,4 @@
+import { logo } from '../perfil.js';
 import { h, montar, plural, markdownSimple } from '../ui.js';
 import { pedir } from '../api.js';
 import { icono } from '../iconos.js';
@@ -19,7 +20,7 @@ export function vistaEquipo(app, id) {
     montar(app, h('main', { id: 'principal', class: 'pagina' },
       h('div', { class: 'pagina-top' },
         h('a', { class: 'btn texto chico', href: '#/' }, icono('atras'), 'Inicio'),
-        h('img', { src: 'marca/logo.png', alt: 'RetroScape', width: 120, height: 36 })),
+        h('img', { src: logo(), 'data-logo': '', alt: 'RetroScape', width: 120, height: 36 })),
       h('div', { class: 'pila g8' }, h('h1', null, `Evolución de ${eq.nombre}`), h('p', { class: 'suave' }, `${plural(hist.length, 'sprint registrado', 'sprints registrados')}. Las posiciones son anónimas: solo se guarda cuántos hubo en cada zona.`)),
       hist.length < 2 ? h('p', { class: 'nota' }, 'Se necesitan al menos 2 sprints para ver tendencias.') : null,
 

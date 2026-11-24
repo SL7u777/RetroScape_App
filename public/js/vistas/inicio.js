@@ -1,6 +1,6 @@
-import { h, montar, aviso } from '../ui.js';
+import { h, montar, aviso, confirmar } from '../ui.js';
 import { pedir } from '../api.js';
-import { perfil, guardarPerfil, guardarCredencial, salasGuardadas, credencial } from '../perfil.js';
+import { perfil, guardarPerfil, guardarCredencial, salasGuardadas, credencial, olvidarSala, logo } from '../perfil.js';
 import { paisaje } from '../paisaje.js';
 import { icono } from '../iconos.js';
 
@@ -82,7 +82,7 @@ export function vistaInicio(app, params) {
 
   montar(app, h('div', { class: 'inicio' },
     h('header', { class: 'inicio-top' },
-      h('img', { src: 'marca/logo.png', alt: 'RetroScape', width: 134, height: 40 }),
+      h('img', { src: logo(), 'data-logo': '', alt: 'RetroScape', width: 134, height: 40 }),
       h('a', { class: 'btn texto chico', href: '#/preferencias' }, icono('ajustes'), 'Preferencias')),
     h('main', { id: 'principal', class: 'inicio-cuerpo' },
       h('section', { class: 'inicio-hero' },
@@ -93,7 +93,26 @@ export function vistaInicio(app, params) {
         formUnirse,
         formCrear,
         recientes.length ? h('div', { class: 'tarjeta' }, h('h3', null, 'Tus salas recientes'),
-          h('ul', { class: 'items' }, recientes.map(([c, d]) => h('li', null, h('a', { class: 'btn ancho', href: `#/sala/${c}`, style: { justifyContent: 'space-between' } }, h('span', null, c), h('span', { class: 'suave chico' }, d.rol === 'facilitador' ? 'Facilitas' : d.nombre)))))) : null,
+          h('ul', { class: 'items' }, recientes.map(([c, d]) => {
+            const fila = h('li', { class: 'reciente' },
+              h('a', { class: 'btn ancho', href: `#/sala/${c}`, style: { justifyContent: 'space-between' } }, h('span', null, c), h('span', { class: 'suave chico' }, d.rol === 'facilitador' ? 'Facilitas' : d.nombre)),
+              h('button', { type: 'button', class: 'btn icono-solo', 'aria-label': `Quitar ${c} de tu lista`, title: 'Quitar de tu lista', onclick: async () => {
+                const ok = await confirmar({
+                  titulo: `¿Quitar ${c} de tu lista?`,
+                  texto: d.rol === 'facilitador'
+                    ? 'La sala no se borra, pero en este dispositivo dejarás de tener el control como facilitador. Solo podrás volver a entrar como miembro.'
+                    : 'La sala no se borra. Si quieres volver, entras de nuevo con el código.',
+                  aceptar: 'Quitar', peligro: true,
+                });
+                if (!ok) return;
+                olvidarSala(c);
+                const lista = fila.parentElement;
+                fila.remove();
+                if (!lista.children.length) lista.parentElement.remove();
+                aviso(`${c} se quitó de tu lista`);
+              } }, icono('basura')));
+            return fila;
+          }))) : null,
         h('div', { class: 'inicio-pie suave' }, estadoIA, equiposPie)))));
 
   pedir('/api/estado').then(r => {

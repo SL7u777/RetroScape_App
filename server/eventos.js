@@ -34,3 +34,7 @@ export function emitir(sala) {
 setInterval(() => {
   for (const grupo of clientes.values()) for (const c of grupo) c.res.write(': latido\n\n');
 }, 20000).unref();
+
+export function cerrarParticipante(codigo, id) {
+  for (const c of [...(clientes.get(codigo) || [])]) if (c.participante?.id === id) { clientes.get(codigo).delete(c); c.res.end(); }
+}

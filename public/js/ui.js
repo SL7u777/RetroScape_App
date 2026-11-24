@@ -103,3 +103,19 @@ export async function direccionSala() {
   try { direccion = (await (await fetch('/api/estado')).json()).red?.[0] || location.host; } catch { direccion = location.host; }
   return direccion;
 }
+
+export function confirmar({ titulo, texto, aceptar = 'Aceptar', cancelar = 'Cancelar', peligro = false }) {
+  return new Promise(resolver => {
+    const d = h('dialog', { class: 'confirmacion', 'aria-labelledby': 'conf-titulo', 'aria-describedby': 'conf-texto' },
+      h('h2', { id: 'conf-titulo' }, titulo),
+      texto ? h('p', { id: 'conf-texto', class: 'suave' }, texto) : null,
+      h('div', { class: 'conf-botones' },
+        h('button', { type: 'button', class: 'btn', onclick: () => d.close('no') }, cancelar),
+        h('button', { type: 'button', class: `btn primario${peligro ? ' peligro' : ''}`, onclick: () => d.close('si') }, aceptar)));
+    d.addEventListener('close', () => { d.remove(); resolver(d.returnValue === 'si'); });
+    d.addEventListener('click', e => { if (e.target === d) d.close('no'); });
+    document.body.append(d);
+    d.showModal();
+    d.querySelector('.conf-botones .btn').focus();
+  });
+}

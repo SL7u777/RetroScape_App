@@ -29,13 +29,12 @@ export function vistaProyector(app, codigo, token) {
     if (vozActiva) hablar('Listo. Eco hablará por este parlante.');
     try { await pedir(`/api/salas/${codigo}/accion`, { token, tipo: 'proyectorVoz', activa: vozActiva }); } catch {}
   } }, icono('altavoz'), h('span', null, 'Que Eco hable aquí'));
-  const salir = h('a', { class: 'btn chico texto salir-proyector', href: `#/sala/${codigo}`, title: 'Volver al panel de la sala' }, 'Salir');
 
   montar(app, h('div', { class: 'proyector' },
     h('header', null,
       h('img', { src: 'marca/logo-claro.png', alt: 'RetroScape' }),
       entra,
-      h('span', { style: { flex: 1 } }), fase, hayLectura ? activar : null, salir),
+      h('span', { style: { flex: 1 } }), fase, hayLectura ? activar : null),
     h('main', { id: 'principal', class: 'cuerpo' }, principal, lateral),
     subtitulo));
 
