@@ -1,5 +1,5 @@
 import { h, montar, plural, RAZONES, ORIGEN, resumenDistribucion, direccionSala } from '../ui.js';
-import { conectarSala } from '../api.js';
+import { conectarSala, pedir } from '../api.js';
 import { paisaje, nombreClima } from '../paisaje.js';
 import { hablar, hayLectura } from '../voz.js';
 import { icono } from '../iconos.js';
@@ -22,13 +22,20 @@ export function vistaProyector(app, codigo, token) {
   const principal = h('div', { class: 'principal' }, marco);
   const fase = h('span', { class: 'chip' });
   const subtitulo = h('div', { class: 'subtitulo-eco', role: 'status', 'aria-live': 'polite' });
-  const activar = h('button', { type: 'button', class: 'btn chico', onclick: () => { vozActiva = !vozActiva; activar.lastChild.textContent = vozActiva ? 'Voz de Eco activada' : 'Activar voz de Eco'; if (vozActiva) hablar('La voz de Eco está activada.'); } }, icono('altavoz'), h('span', null, 'Activar voz de Eco'));
+  const activar = h('button', { type: 'button', class: 'btn chico', 'aria-pressed': 'false', title: 'Las respuestas de Eco sonarán por el parlante de este equipo', onclick: async () => {
+    vozActiva = !vozActiva;
+    activar.setAttribute('aria-pressed', String(vozActiva));
+    activar.lastChild.textContent = vozActiva ? 'Eco habla aquí' : 'Que Eco hable aquí';
+    if (vozActiva) hablar('Listo. Eco hablará por este parlante.');
+    try { await pedir(`/api/salas/${codigo}/accion`, { token, tipo: 'proyectorVoz', activa: vozActiva }); } catch {}
+  } }, icono('altavoz'), h('span', null, 'Que Eco hable aquí'));
+  const salir = h('a', { class: 'btn chico texto salir-proyector', href: `#/sala/${codigo}`, title: 'Volver al panel de la sala' }, 'Salir');
 
   montar(app, h('div', { class: 'proyector' },
     h('header', null,
       h('img', { src: 'marca/logo-claro.png', alt: 'RetroScape' }),
       entra,
-      h('span', { style: { flex: 1 } }), fase, hayLectura ? activar : null),
+      h('span', { style: { flex: 1 } }), fase, hayLectura ? activar : null, salir),
     h('main', { id: 'principal', class: 'cuerpo' }, principal, lateral),
     subtitulo));
 

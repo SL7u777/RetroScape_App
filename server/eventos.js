@@ -1,4 +1,4 @@
-import { vista, conexion } from './salas.js';
+import { vista, conexion, proyectorVoz } from './salas.js';
 
 const clientes = new Map();
 
@@ -18,6 +18,7 @@ export function suscribir(sala, rol, participante, req, res) {
   req.on('close', () => {
     clientes.get(sala.codigo)?.delete(cliente);
     if (participante) { conexion(sala, participante.id, -1); emitir(sala); }
+    else if (rol === 'proyector' && sala.eco.vozProyector && ![...(clientes.get(sala.codigo) || [])].some(c => c.rol === 'proyector')) proyectorVoz(sala, false);
   });
 }
 

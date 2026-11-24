@@ -20,9 +20,10 @@ export function montarEco(app, ctx) {
   const entrada = h('input', { class: 'input', placeholder: 'Escribe o toca el micrófono', 'aria-label': 'Pídele algo a Eco', maxlength: 300 });
   const mic = h('button', { type: 'button', class: 'mic', 'aria-label': 'Hablar con Eco' }, icono('mic'));
   const pendiente = h('div', { class: 'pila g8' });
+  const opcionProyector = h('option', { value: 'proyector' }, 'Voz en el proyector');
   const destino = h('select', { class: 'input', style: { minHeight: '36px', padding: '4px 8px' }, 'aria-label': 'Dónde suena la voz de Eco', onchange: e => guardarPerfil({ prefs: { ...perfil().prefs, vozEco: e.target.value } }) },
-    h('option', { value: 'este' }, 'Voz en este dispositivo'), h('option', { value: 'proyector' }, 'Voz en el proyector'), h('option', { value: 'ninguno' }, 'Sin voz, solo texto'));
-  destino.value = perfil().prefs.vozEco;
+    h('option', { value: 'este' }, 'Voz en este dispositivo'), opcionProyector, h('option', { value: 'ninguno' }, 'Sin voz, solo texto'));
+  destino.value = perfil().prefs.vozEco === 'ninguno' ? 'ninguno' : (v?.eco?.vozProyector ? 'proyector' : 'este');
 
   montar(panel,
     h('div', { class: 'eco-cabeza' },
@@ -98,7 +99,12 @@ export function montarEco(app, ctx) {
   return {
     boton,
     actualizar(nuevo) {
+      const antes = !!v?.eco?.vozProyector;
       v = nuevo;
+      const ahora = !!v.eco?.vozProyector;
+      opcionProyector.textContent = ahora ? 'Voz en el proyector (conectado)' : 'Voz en el proyector';
+      if (ahora && !antes && destino.value !== 'ninguno') destino.value = 'proyector';
+      if (!ahora && antes && destino.value === 'proyector') destino.value = 'este';
       const u = v.eco?.ultimo;
       if (u && ultimoHablado === null) ultimoHablado = u.id;
       if (u && u.id !== ultimoHablado) {

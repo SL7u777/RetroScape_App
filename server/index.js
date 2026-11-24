@@ -55,6 +55,7 @@ async function accion(sala, rol, p, d) {
     if (d.tipo === 'comentar') return S.comentar(sala, d);
     if (d.tipo === 'votar') return S.votar(sala, p, d);
   }
+  if (d.tipo === 'proyectorVoz' && rol === 'proyector') return S.proyectorVoz(sala, d.activa);
   if (rol !== 'facilitador') throw new S.ErrorSala('Esta acción es del facilitador', 403);
   if (EDICION.has(d.tipo)) return S.editarAnalisis(sala, d.tipo, d);
   switch (d.tipo) {

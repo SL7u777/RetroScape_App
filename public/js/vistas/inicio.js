@@ -4,10 +4,7 @@ import { perfil, guardarPerfil, guardarCredencial, salasGuardadas, credencial } 
 import { paisaje } from '../paisaje.js';
 import { icono } from '../iconos.js';
 
-const normalizarCodigo = t => {
-  const d = String(t).toUpperCase().replace(/[^0-9]/g, '').slice(0, 4);
-  return d.length === 4 ? `RS-${d}` : String(t).toUpperCase().trim();
-};
+const soloDigitos = t => String(t || '').replace(/\D/g, '').slice(-4);
 
 function irASala(codigo) {
   const destino = `#/sala/${codigo}`;
@@ -31,20 +28,22 @@ export function vistaInicio(app, params) {
     { zona: 'valle', nombre: null }, { zona: 'tormenta', nombre: null },
   ];
 
-  const codigo = h('input', { class: 'input codigo', id: 'codigo', inputmode: 'numeric', autocomplete: 'off', placeholder: 'RS-0000', value: params.get('codigo') || '', 'aria-describedby': 'ayuda-codigo' });
+  const codigo = h('input', { class: 'input codigo', id: 'codigo', inputmode: 'numeric', pattern: '[0-9]*', autocomplete: 'off', placeholder: '0000', maxlength: 12, value: soloDigitos(params.get('codigo')), 'aria-describedby': 'ayuda-codigo',
+    oninput: e => { const d = soloDigitos(e.target.value); if (d !== e.target.value) e.target.value = d; } });
   const nombre = h('input', { class: 'input', id: 'nombre', autocomplete: 'given-name', maxlength: 30, value: p.nombre });
   const errorUnirse = h('p', { class: 'nota error oculto', role: 'alert' });
 
   const formUnirse = h('form', { class: 'tarjeta destacada', onsubmit: async e => {
     e.preventDefault();
     errorUnirse.classList.add('oculto');
-    const c = normalizarCodigo(codigo.value);
-    if (!/^RS-\d{4}$/.test(c)) { errorUnirse.textContent = 'El código tiene la forma RS-0000. Pídeselo a quien facilita.'; errorUnirse.classList.remove('oculto'); codigo.focus(); return; }
+    const d = soloDigitos(codigo.value);
+    if (d.length !== 4) { errorUnirse.textContent = 'Escribe los cuatro números del código. Pídeselo a quien facilita.'; errorUnirse.classList.remove('oculto'); codigo.focus(); return; }
+    const c = `RS-${d}`;
     if (!nombre.value.trim()) { errorUnirse.textContent = 'Escribe tu nombre. Solo se mostrará si tú lo decides.'; errorUnirse.classList.remove('oculto'); nombre.focus(); return; }
     try { await entrarASala(c, nombre.value.trim()); } catch (err) { errorUnirse.textContent = err.message; errorUnirse.classList.remove('oculto'); }
   } },
   h('h2', null, 'Unirme a una retro'),
-  h('label', { class: 'campo', for: 'codigo' }, 'Código de la sala', codigo, h('span', { id: 'ayuda-codigo', class: 'suave chico' }, 'Te lo da quien facilita. Basta con los cuatro números.')),
+  h('label', { class: 'campo', for: 'codigo' }, 'Código de la sala', h('span', { class: 'con-prefijo' }, h('span', { class: 'prefijo', 'aria-hidden': 'true' }, 'RS-'), codigo), h('span', { id: 'ayuda-codigo', class: 'suave chico' }, 'Te lo da quien facilita. Escribe solo los cuatro números.')),
   h('label', { class: 'campo', for: 'nombre' }, 'Tu nombre', nombre, h('span', { class: 'suave chico' }, 'Tu posición y tus comentarios son anónimos.')),
   errorUnirse,
   h('button', { class: 'btn primario', type: 'submit' }, 'Entrar a la sala'));

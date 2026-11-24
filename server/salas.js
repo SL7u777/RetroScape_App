@@ -537,6 +537,12 @@ function resolverPendiente(sala, confirmar) {
   }
 }
 
+export function proyectorVoz(sala, activa) {
+  sala.eco.vozProyector = !!activa;
+  sala.eco.vozEn = activa ? 'proyector' : 'facilitador';
+  cambio(sala);
+}
+
 export function ecoBoton(sala, confirmar, vozEn) {
   if (vozEn) sala.eco.vozEn = vozEn === 'proyector' ? 'proyector' : 'facilitador';
   sala.eco.log.push({ quien: 'facilitador', texto: confirmar ? 'Confirmar' : 'Cancelar' });
@@ -652,7 +658,7 @@ export function vista(sala, rol, p) {
   v.congeladas = sala.congeladas;
   v.acta = esFac || sala.acta.estado === 'publicada' ? { estado: sala.acta.estado, texto: sala.acta.texto, error: sala.acta.error } : { estado: sala.acta.estado };
 
-  if (esFac) v.eco = { log: sala.eco.log, pendiente: sala.eco.pendiente, ultimo: sala.eco.ultimo };
+  if (esFac) v.eco = { log: sala.eco.log, pendiente: sala.eco.pendiente, ultimo: sala.eco.ultimo, vozProyector: !!sala.eco.vozProyector };
   if (rol === 'proyector' || esFac) v.ecoUltimo = sala.eco.ultimo;
   return v;
 }

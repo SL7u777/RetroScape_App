@@ -85,6 +85,10 @@ label.campo { display: flex; flex-direction: column; gap: 6px; font-weight: 600;
 textarea.input { min-height: 110px; resize: vertical; line-height: 1.5; }
 .input:focus { outline: none; border-color: var(--lila); box-shadow: 0 0 0 3px var(--lila-suave); }
 .input.codigo { font-family: var(--display); font-size: 1.375rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.con-prefijo { display: flex; align-items: center; min-height: 44px; border: 1px solid var(--linea-fuerte); border-radius: 10px; background: var(--papel); overflow: hidden; }
+.con-prefijo:focus-within { border-color: var(--lila); box-shadow: 0 0 0 3px var(--lila-suave); }
+.con-prefijo .prefijo { align-self: stretch; display: grid; place-items: center; padding: 0 6px 0 14px; background: var(--lila-suave); color: var(--suave); font-family: var(--display); font-size: 1.375rem; font-weight: 700; letter-spacing: .06em; }
+.con-prefijo .input.codigo, .con-prefijo .input.codigo:focus { border: 0; box-shadow: none; border-radius: 0; padding-left: 8px; }
 
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--lila-suave); color: var(--indigo); font-size: .8125rem; font-weight: 600; white-space: nowrap; }
 .chip svg { width: 14px; height: 14px; }
@@ -236,6 +240,9 @@ textarea.acta-editor { min-height: 320px; font-family: ui-monospace, "Cascadia C
 .proyector header img { height: 44px; width: auto; }
 .proyector .entra { font-family: var(--display); font-size: 1.5rem; font-weight: 500; letter-spacing: 0; }
 .proyector .entra b { color: var(--oro); letter-spacing: .05em; }
+.proyector .salir-proyector { color: #fff; opacity: .75; }
+.proyector .salir-proyector:hover, .proyector .salir-proyector:focus-visible { opacity: 1; }
+.proyector header .btn[aria-pressed="true"] { background: var(--teal); color: #fff; border-color: var(--teal); }
 .proyector .cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; padding: 0 32px 20px; align-items: start; }
 .proyector .marco { border-radius: 22px; overflow: hidden; }
 .proyector .lateral { display: flex; flex-direction: column; gap: 16px; }
