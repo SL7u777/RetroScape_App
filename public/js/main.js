@@ -8,6 +8,15 @@ import { vistaPreferencias } from './vistas/preferencias.js';
 aplicarPreferencias();
 let limpiar = null;
 
+const conMovimiento = () => !document.documentElement.classList.contains('sin-animacion') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+let primera = true;
+
+// Cambio de pantalla con un fundido suave donde el navegador lo permite
+function navegar() {
+  if (primera || !document.startViewTransition || !conMovimiento()) { primera = false; rutear(); return; }
+  document.startViewTransition(rutear);
+}
+
 function rutear() {
   limpiar?.();
   limpiar = null;
@@ -24,8 +33,8 @@ function rutear() {
   window.scrollTo(0, 0);
 }
 
-addEventListener('hashchange', rutear);
-rutear();
+addEventListener('hashchange', navegar);
+navegar();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});

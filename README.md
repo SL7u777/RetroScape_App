@@ -17,14 +17,15 @@ El detalle de cada automatización, por qué necesita IA y qué decide siempre u
 
 ## Estado del proyecto
 
-Avance para la Práctica Calificada 03 (noviembre de 2026). Funciona de punta a punta: salas en tiempo real, colocación privada y revelación anónima, comentarios por voz o texto con revisión del guardián, análisis con LLM revisable por quien facilita, votación con fichas, acta, seguimiento de misiones entre sprints, Eco, vista para el proyector y evolución del equipo. Las cuatro automatizaciones están implementadas y probadas con Groq; el adaptador de Gemini es intercambiable desde `.env`.
+Versión final (noviembre de 2026), publicada en https://retroscape.onrender.com. Funciona de punta a punta: salas en tiempo real, colocación privada y revelación anónima, comentarios por voz o texto con revisión del guardián, análisis con LLM revisable por quien facilita, votación con fichas, acta, seguimiento de misiones entre sprints, Eco, vista para el proyector y evolución del equipo. Las cuatro automatizaciones están implementadas y probadas con Groq; el adaptador de Gemini es intercambiable desde `.env`.
 
-Pendiente para la entrega final:
+Cambios de la versión final, a partir de la evaluación con Lighthouse, axe, WAVE y pruebas en celulares reales:
 
-- Evaluación de usabilidad con usuarios reales y los ajustes que resulten.
-- Publicación con HTTPS, necesaria para el dictado por voz y la instalación de la PWA en celulares.
-- Arrastre del avatar sobre el paisaje (hoy se coloca tocando una zona, con botones o con el teclado).
-- Ajuste fino de los prompts con el proveedor real y más pruebas de la voz de Eco en el proyector.
+- **Dictado en cualquier navegador.** Si el navegador no tiene reconocimiento de voz (Firefox) o su servicio no responde (pasó en Edge), la app graba el audio y lo transcribe en el servidor con Whisper a través de Groq. Los mensajes de error explican la causa real y cómo seguir.
+- **Sin saltos al cargar la sala.** La cabecera, la barra de fases y el paisaje reservan su espacio desde el primer momento (CLS de 0,156 a 0,01).
+- **La acción de cada fase siempre a la vista en el celular**, en una barra fija abajo, y la barra de fases dice «Paso 4 de 5: Votación».
+- **Paisaje vivo.** Nubes, pájaros, sol, árboles, relámpagos y banderas con movimiento; los avatares se mueven según su zona y caen al revelar. Todo se apaga con «Sin animaciones», con el modo enfoque o si el sistema pide reducir el movimiento.
+- Contraste del gráfico de evolución, botones de al menos 44 px, sin desborde a 320 px, archivos comprimidos y con caché, y un margen de 2 minutos antes de dejar de esperar a alguien que bloqueó el celular.
 
 ## Cómo correrlo
 

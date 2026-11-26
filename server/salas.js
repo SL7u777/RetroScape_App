@@ -13,6 +13,7 @@ const FICHAS = 3;
 const MIN_ANONIMATO = 3;
 const CUENTA_MS = 3500;
 const ACTIVO_MS = 20000;
+const PRESENTE_MS = 120000;
 
 export class ErrorSala extends Error {
   constructor(mensaje, status = 400) { super(mensaje); this.status = status; }
@@ -90,14 +91,16 @@ export function autenticar(sala, token) {
 }
 
 const activo = p => p.conexiones > 0 || Date.now() - p.vistoEn < ACTIVO_MS;
+// Margen antes de dejar de esperar a alguien: un celular bloqueado corta la conexión unos segundos
+const presente = p => p.conexiones > 0 || Date.now() - p.vistoEn < PRESENTE_MS;
 const lista = sala => Object.values(sala.participantes);
 const revelada = sala => !!sala.revelacion && Date.now() >= sala.revelacion.en;
 
 function progreso(sala) {
   const todos = lista(sala);
   const colocados = todos.filter(p => p.zona).length;
-  const pendientes = todos.filter(p => !p.zona && activo(p)).length;
-  const votantes = todos.filter(p => activo(p) || p.votoConfirmado);
+  const pendientes = todos.filter(p => !p.zona && presente(p)).length;
+  const votantes = todos.filter(p => presente(p) || p.votoConfirmado);
   const votaron = todos.filter(p => p.votoConfirmado).length;
   return { total: colocados + pendientes, colocados, pendientes, votaron, totalVotantes: votantes.length, faltanVotos: votantes.filter(p => !p.votoConfirmado).length };
 }
@@ -169,7 +172,7 @@ export function temporizador(sala, minutos, sumar = false) {
 
 const presencias = new Map();
 function revisarPresencia(sala) {
-  const firma = lista(sala).map(p => p.id + (activo(p) ? '+' : '-')).join();
+  const firma = lista(sala).map(p => p.id + (activo(p) ? '+' : '-') + (presente(p) ? '+' : '-')).join();
   if (presencias.get(sala.codigo) === firma) return;
   const habia = presencias.has(sala.codigo);
   presencias.set(sala.codigo, firma);

@@ -20,6 +20,9 @@ function agregar(el, hijos) {
   }
 }
 
+// Acción principal de la fase: en una sola columna queda fija abajo mientras se recorre el panel
+export const accionFija = (...hijos) => h('div', { class: 'accion-fija' }, ...hijos);
+
 export const svg = (tag, props, ...hijos) => h(`svg:${tag}`, props, ...hijos);
 
 export function montar(destino, ...hijos) {

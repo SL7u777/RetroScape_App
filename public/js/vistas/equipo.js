@@ -26,7 +26,7 @@ export function vistaEquipo(app, id) {
 
       h('section', { class: 'tarjeta' },
         h('h2', null, 'Clima del equipo por sprint'),
-        h('div', { class: 'leyenda', 'aria-hidden': 'true' }, h('span', null, h('i', { style: { background: 'var(--durazno)' } }), 'Cima'), h('span', null, h('i', { style: { background: 'var(--teal)' } }), 'Valle'), h('span', null, h('i', { style: { background: 'var(--tormenta)' } }), 'Tormenta')),
+        h('div', { class: 'leyenda', 'aria-hidden': 'true' }, h('span', null, h('i', { style: { background: 'var(--durazno)' } }), 'Cima'), h('span', null, h('i', { style: { background: '#1F7A6D' } }), 'Valle'), h('span', null, h('i', { style: { background: 'var(--tormenta)' } }), 'Tormenta')),
         h('div', { class: 'serie' }, hist.map(s => {
           const d = s.distribucion;
           const n = d.cima + d.valle + d.tormenta || 1;

@@ -1,6 +1,6 @@
-import { h, plural, ZONAS, RAZONES, ORIGEN, resumenDistribucion, markdownSimple, anunciar, aviso } from '../ui.js';
+import { h, accionFija, plural, ZONAS, RAZONES, ORIGEN, resumenDistribucion, markdownSimple, anunciar, aviso } from '../ui.js';
 import { recordarPosicion, posicionAnterior, perfil, guardarPerfil } from '../perfil.js';
-import { hablar, hayLectura } from '../voz.js';
+import { hablar, hayLectura, puedeDictar } from '../voz.js';
 import { icono } from '../iconos.js';
 
 export function botonEscuchar(texto, etiqueta = 'Escuchar') {
@@ -51,7 +51,7 @@ function colocacion(ctx) {
       recordatorio(v),
     ];
   }
-  const elegir = zona => { local.seleccion = zona; ctx.refrescar(); };
+  const elegir = zona => { local.seleccion = zona; local.elegidaEn = Date.now(); ctx.refrescar(); };
   const alternar = r => {
     local.razones = local.razones.includes(r) ? local.razones.filter(x => x !== r) : local.razones.length < 2 ? [...local.razones, r] : (aviso('Puedes marcar hasta dos razones'), local.razones);
     ctx.refrescar();
@@ -69,14 +69,14 @@ function colocacion(ctx) {
       h('h2', null, '¿Cómo viviste el sprint?'),
       h('p', { class: 'suave' }, 'Elige una zona aquí o tocando el paisaje. Nadie verá dónde te colocaste hasta que se revele a la vez.')),
     h('div', { class: 'zonas', role: 'group', 'aria-label': 'Zonas del paisaje' }, Object.entries(ZONAS).map(([k, z]) =>
-      h('button', { type: 'button', class: 'zona-btn', 'aria-pressed': String(local.seleccion === k), onclick: () => elegir(k) }, icono(z.icono), h('strong', null, z.nombre), h('span', null, z.frase)))),
+      h('button', { type: 'button', class: `zona-btn${local.seleccion === k && Date.now() - (local.elegidaEn || 0) < 250 ? ' pop' : ''}`, 'aria-pressed': String(local.seleccion === k), onclick: () => elegir(k) }, icono(z.icono), h('strong', null, z.nombre), h('span', null, z.frase)))),
     h('div', { class: 'pila g8' },
       h('span', { class: 'chico', style: { fontWeight: 600 } }, 'Qué influyó más (opcional, hasta dos)'),
       h('div', { class: 'opciones' }, Object.entries(RAZONES).map(([k, n]) => h('button', { type: 'button', class: 'opcion', 'aria-pressed': String(local.razones.includes(k)), onclick: () => alternar(k) }, n))),
       h('p', { class: 'chico suave' }, 'Solo se muestra el total de cada razón, nunca quién la marcó.')),
-    h('div', { class: 'fila' },
+    accionFija(h('div', { class: 'fila' },
       h('button', { type: 'button', class: 'btn primario', disabled: !local.seleccion, onclick: confirmar }, local.seleccion ? `Colocarme en ${ZONAS[local.seleccion].nombre}` : 'Elige una zona'),
-      local.cambiando ? h('button', { type: 'button', class: 'btn texto', onclick: () => { local.cambiando = false; ctx.refrescar(); } }, 'Cancelar') : null),
+      local.cambiando ? h('button', { type: 'button', class: 'btn texto', onclick: () => { local.cambiando = false; ctx.refrescar(); } }, 'Cancelar') : null)),
     recordatorio(v),
   ];
 }
@@ -93,7 +93,7 @@ function comentarios(ctx) {
         icono(v.yo.mostrarNombre ? 'check' : 'ojo'), v.yo.mostrarNombre ? 'Tu nombre se ve en el paisaje' : 'Mostrar mi nombre en el paisaje') : null),
     h('div', { class: 'seccion' },
       h('h3', null, 'Deja un comentario anónimo'),
-      h('p', { class: 'suave chico' }, 'Puedes dictarlo o escribirlo. Deja todos los que quieras.'),
+      h('p', { class: 'suave chico' }, puedeDictar() ? 'Puedes dictarlo o escribirlo. Deja todos los que quieras.' : 'Escríbelo con tus palabras. Deja todos los que quieras.'),
       ctx.compositor.el,
       local.enviados.length ? h('details', null, h('summary', { class: 'chico' }, `Enviaste ${plural(local.enviados.length, 'comentario', 'comentarios')} (solo tú ves esta lista)`),
         h('div', { class: 'pila g8', style: { marginTop: '8px' } }, local.enviados.map(t => h('div', { class: 'cita' }, t)))) : null),
@@ -133,7 +133,7 @@ function votacion(ctx) {
         h('button', { type: 'button', 'aria-label': 'Quitar una ficha', disabled: !local.votos[a.id], onclick: () => cambiar(a.id, -1) }, '−'),
         h('output', { 'aria-live': 'polite', class: local.votos[a.id] ? 'ficha-pop' : '' }, local.votos[a.id] || 0),
         h('button', { type: 'button', 'aria-label': 'Poner una ficha', disabled: libres <= 0, onclick: () => cambiar(a.id, +1) }, '+'))))),
-    h('button', { type: 'button', class: 'btn primario', disabled: !usadas, onclick: () => ctx.accion('votar', { votos: local.votos, confirmar: true }).then(ok => ok && anunciar('Voto confirmado')) }, 'Confirmar mi voto'),
+    accionFija(h('button', { type: 'button', class: 'btn primario ancho', disabled: !usadas, onclick: () => ctx.accion('votar', { votos: local.votos, confirmar: true }).then(ok => ok && anunciar('Voto confirmado')) }, usadas ? `Confirmar mi voto (${usadas} de ${vt.fichas} fichas)` : 'Pon al menos una ficha')),
     h('div', { class: 'seccion secundaria' }, h('h3', null, 'Temas del análisis'), h('p', { class: 'chico suave' }, 'Agrupados por IA y revisados por quien facilita. Puedes leer los comentarios de cada tema.'), temasPublicados(v)),
   ];
 }

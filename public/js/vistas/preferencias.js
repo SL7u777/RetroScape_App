@@ -1,7 +1,7 @@
 import { h, montar, aviso } from '../ui.js';
 import { perfil, guardarPerfil, logo } from '../perfil.js';
 import { icono } from '../iconos.js';
-import { hayDictado } from '../voz.js';
+import { puedeDictar, motivoSinVoz, mensajeErrorVoz } from '../voz.js';
 
 export function vistaPreferencias(app) {
   const dibujar = () => {
@@ -30,7 +30,7 @@ export function vistaPreferencias(app) {
 
       h('section', { class: 'tarjeta' },
         h('h2', null, 'Voz'),
-        hayDictado ? null : h('p', { class: 'nota oro' }, 'Este navegador no tiene dictado. Usa Chrome o Edge para comentar por voz.'),
+        puedeDictar() ? null : h('p', { class: 'nota oro' }, mensajeErrorVoz(motivoSinVoz(), '', 'escribe tus comentarios')),
         h('div', { class: 'pila g8' }, h('span', { class: 'chico', style: { fontWeight: 600 } }, 'Cuánto espera el dictado antes de cortar'),
           h('div', { class: 'opciones' }, [[1200, 'Poco'], [1800, 'Normal'], [3200, 'Bastante']].map(([n, t]) => h('button', { type: 'button', class: 'opcion', 'aria-pressed': String(p.dictado.espera === n), onclick: () => { guardarPerfil({ dictado: { ...p.dictado, espera: n } }); dibujar(); } }, t))),
           h('p', { class: 'chico suave' }, 'Si sueles corregir lo que dictas, RetroScape te sugerirá esperar más.'))),

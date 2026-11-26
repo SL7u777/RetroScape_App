@@ -1,6 +1,6 @@
 import { h, montar, aviso, anunciar } from '../ui.js';
 import { pedir } from '../api.js';
-import { dictar, hayDictado, mensajeErrorVoz } from '../voz.js';
+import { dictar, puedeDictar, modoDictado, motivoSinVoz, vozLista, mensajeErrorVoz } from '../voz.js';
 import { perfil, guardarPerfil, registrarEmocion } from '../perfil.js';
 import { icono } from '../iconos.js';
 import { EMOCIONES } from './emociones.js';
@@ -42,13 +42,21 @@ export function crearCompositor(ctx) {
     estadoVoz.textContent = 'Grabando. Habla con normalidad.';
     detenerDictado = dictar({
       espera: perfil().dictado.espera,
+      sala: { codigo: ctx.codigo, token: ctx.token },
+      alEstado: t => { estadoVoz.textContent = t; if (t === 'Transcribiendo…') mic.disabled = true; },
+      alNivel: n => mic.style.setProperty('--nivel', n.toFixed(2)),
       alParcial: t => { area.value = [base, t].filter(Boolean).join(' '); estadoVoz.textContent = 'Grabando…'; },
-      alFinal: t => { fin(); if (t) { dictado = area.value; estadoVoz.textContent = 'Listo. Revisa el texto antes de publicar.'; } else estadoVoz.textContent = 'No se escuchó nada.'; },
-      alError: (codigo, parcial) => { fin(); if (parcial) area.value = [base, parcial].filter(Boolean).join(' '); errorVoz = mensajeErrorVoz(codigo); estadoVoz.textContent = ''; dibujar(); },
+      alFinal: t => {
+        fin();
+        if (t) { area.value = [base, t].filter(Boolean).join(' '); dictado = area.value; estadoVoz.textContent = 'Listo. Revisa el texto antes de publicar.'; } else estadoVoz.textContent = 'No se escuchó nada. Toca el micrófono y habla cerca.';
+      },
+      alError: (codigo, parcial, detalle) => { fin(); if (parcial) area.value = [base, parcial].filter(Boolean).join(' '); errorVoz = mensajeErrorVoz(codigo, detalle); estadoVoz.textContent = ''; dibujar(); },
     });
   }
   function fin() {
     detenerDictado = null;
+    mic.disabled = false;
+    mic.style.removeProperty('--nivel');
     mic.classList.remove('escuchando');
     mic.setAttribute('aria-label', 'Dictar comentario');
     mic.replaceChildren(icono('mic'));
@@ -95,7 +103,7 @@ export function crearCompositor(ctx) {
 
   function sugerenciaPersonal() {
     const d = perfil().dictado;
-    if (d.correcciones < 3 || d.sugerenciaVista || !hayDictado) return null;
+    if (d.correcciones < 3 || d.sugerenciaVista || modoDictado() !== 'navegador') return null;
     const cerrar = cambios => { guardarPerfil({ dictado: { ...d, ...cambios, sugerenciaVista: true } }); dibujar(); };
     return h('div', { class: 'nota' },
       h('p', null, 'Sueles corregir lo que dictas. ¿Te damos más tiempo para hablar antes de cortar la grabación?'),
@@ -108,16 +116,19 @@ export function crearCompositor(ctx) {
   function dibujar() {
     if (paso === 'escribir' || paso === 'revisando') {
       const ocupado = paso === 'revisando';
+      const conVoz = puedeDictar();
+      area.placeholder = conVoz ? 'Qué pasó en este sprint. Habla de procesos, no de personas.' : 'Escribe qué pasó en este sprint. Habla de procesos, no de personas.';
       montar(el,
         area,
         h('div', { class: 'barra' },
-          hayDictado ? mic : null,
+          conVoz ? mic : null,
           h('div', { style: { flex: 1 } }, estadoVoz),
           h('button', { type: 'button', class: 'btn primario', disabled: ocupado, onclick: revisar }, ocupado ? 'Revisando…' : 'Revisar y publicar')),
         errorVoz ? h('div', { class: 'nota error', role: 'alert' }, h('p', null, errorVoz), h('div', { class: 'fila', style: { marginTop: '8px' } },
-          hayDictado ? h('button', { type: 'button', class: 'btn chico', onclick: escuchar }, icono('repetir'), 'Repetir') : null,
+          puedeDictar() ? h('button', { type: 'button', class: 'btn chico', onclick: escuchar }, icono('repetir'), 'Repetir') : null,
           h('button', { type: 'button', class: 'btn chico', onclick: () => { errorVoz = ''; dibujar(); area.focus(); } }, icono('editar'), 'Escribir'))) : null,
         sugerenciaPersonal(),
+        !conVoz ? h('p', { class: 'chico suave dato' }, icono('mic'), mensajeErrorVoz(motivoSinVoz(), '', 'escribe tu comentario').replace(/^El micrófono solo funciona/, 'Para dictar, el micrófono necesita')) : null,
         h('p', { class: 'suave chico dato' }, icono('candado'), 'Antes de publicar, la IA revisa si algo te podría identificar o señala a alguien.'));
       return;
     }
@@ -157,5 +168,7 @@ export function crearCompositor(ctx) {
   }
 
   dibujar();
+  const conVozInicial = puedeDictar();
+  vozLista.then(() => { if (puedeDictar() !== conVozInicial && paso === 'escribir' && !detenerDictado) dibujar(); });
   return { el, detener: () => detenerDictado?.() };
 }

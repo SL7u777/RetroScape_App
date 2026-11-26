@@ -1,4 +1,4 @@
-import { h, plural, ORIGEN, resumenDistribucion, markdownSimple, aviso, direccionSala, confirmar } from '../ui.js';
+import { h, accionFija, plural, ORIGEN, resumenDistribucion, markdownSimple, aviso, direccionSala, confirmar } from '../ui.js';
 import { icono } from '../iconos.js';
 import { recordatorio, estandartes, temasPublicados, botonEscuchar } from './miembro.js';
 
@@ -78,7 +78,7 @@ function colocacion(ctx) {
     local.confirmarRevelar ? h('div', { class: 'nota oro pila g8', role: 'alert' },
       h('p', null, p.pendientes ? `Faltan ${plural(p.pendientes, 'persona', 'personas')} por colocarse. Si revelas ahora, ya no podrán hacerlo.` : `Solo hay ${plural(p.colocados, 'persona colocada', 'personas colocadas')}. Con tan pocas, se podría deducir dónde está cada una.`),
       h('div', { class: 'fila' }, h('button', { type: 'button', class: 'btn chico primario', onclick: revelar }, 'Revelar igual'), h('button', { type: 'button', class: 'btn chico texto', onclick: () => { local.confirmarRevelar = false; ctx.refrescar(); } }, 'Esperar'))) : null,
-    h('button', { type: 'button', class: 'btn primario', disabled: !p.colocados, onclick: revelar }, 'Revelar el paisaje'),
+    accionFija(h('button', { type: 'button', class: 'btn primario ancho', disabled: !p.colocados, onclick: revelar }, 'Revelar el paisaje')),
     invitar(ctx),
     recordatorio(v),
   ];
@@ -93,7 +93,7 @@ function comentarios(ctx) {
       h('p', null, resumenDistribucion(v.distribucion)),
       h('div', { class: 'fila', style: { alignItems: 'baseline' } }, h('span', { class: 'gran-numero' }, v.comentarios.total), h('span', { class: 'suave' }, v.comentarios.total === 1 ? 'comentario' : 'comentarios'))),
     temporizador(ctx),
-    h('button', { type: 'button', class: 'btn primario', onclick: () => ctx.accion('analizar') }, icono('chispa'), 'Cerrar comentarios y analizar'),
+    accionFija(h('button', { type: 'button', class: 'btn primario ancho', onclick: () => ctx.accion('analizar') }, icono('chispa'), 'Cerrar comentarios y analizar')),
     h('p', { class: 'chico suave' }, 'La IA agrupará los comentarios y revisará las misiones del sprint anterior. Verás un borrador que solo tú puedes editar antes de mostrarlo.'),
     invitar(ctx),
   ];
@@ -253,7 +253,7 @@ function votacion(ctx) {
     temporizador(ctx),
     local.confirmarCierre ? h('div', { class: 'nota oro pila g8', role: 'alert' }, h('p', null, `Faltan ${plural(p.totalVotantes - p.votaron, 'voto', 'votos')}.`),
       h('div', { class: 'fila' }, h('button', { type: 'button', class: 'btn chico primario', onclick: cerrar }, 'Cerrar igual'), h('button', { type: 'button', class: 'btn chico texto', onclick: () => { local.confirmarCierre = false; ctx.refrescar(); } }, 'Esperar'))) : null,
-    h('button', { type: 'button', class: 'btn primario', onclick: cerrar }, 'Cerrar la votación'),
+    accionFija(h('button', { type: 'button', class: 'btn primario ancho', onclick: cerrar }, 'Cerrar la votación')),
     h('div', { class: 'seccion' }, h('h3', null, 'Acciones en votación'), h('ul', { class: 'items' }, v.votacion.acciones.map(x => h('li', { class: 'chico' }, x.texto)))),
     h('div', { class: 'seccion' }, h('h3', null, 'Temas publicados'), temasPublicados(v)),
   ];

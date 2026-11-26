@@ -147,3 +147,17 @@ test('tras reiniciar el servidor nada queda colgado ni cuenta como conectado', a
   assert.equal(Object.values(recargada.participantes)[0].conexiones, 0);
   assert.equal(recargada.analisis.estado, 'error');
 });
+
+test('un celular bloqueado unos segundos no hace revelar el paisaje sin esa persona', () => {
+  const { sala, miembros: [ana, luis, carla] } = nuevaSala(['Ana', 'Luis', 'Carla']);
+  const rosa = sala.participantes[S.unirse(sala.codigo, 'Rosa').id];
+  rosa.vistoEn = Date.now() - 30000;
+  [ana, luis, carla].forEach(m => S.colocar(sala, m, { zona: 'valle' }));
+  assert.ok(!sala.revelacion);
+  assert.equal(S.vista(sala, 'facilitador', null).progreso.pendientes, 1);
+  S.revisarTiempos();
+  assert.ok(!sala.revelacion);
+  rosa.vistoEn = Date.now() - 130000;
+  S.revisarTiempos();
+  assert.ok(sala.revelacion);
+});

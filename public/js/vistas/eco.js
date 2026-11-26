@@ -1,6 +1,6 @@
 import { h, montar, aviso } from '../ui.js';
 import { pedir } from '../api.js';
-import { dictar, hayDictado, hablar, mensajeErrorVoz } from '../voz.js';
+import { dictar, puedeDictar, vozLista, hablar, mensajeErrorVoz } from '../voz.js';
 import { perfil, guardarPerfil } from '../perfil.js';
 import { icono } from '../iconos.js';
 
@@ -17,7 +17,8 @@ export function montarEco(app, ctx) {
     h('span', { class: 'orbe' }, icono('mic')), h('span', null, 'Eco'));
   const panel = h('section', { class: 'eco-panel oculto', id: 'eco-panel', role: 'dialog', 'aria-label': 'Eco, asistente de voz' });
   const log = h('div', { class: 'eco-log', 'aria-live': 'polite' });
-  const entrada = h('input', { class: 'input', placeholder: 'Escribe o toca el micrófono', 'aria-label': 'Pídele algo a Eco', maxlength: 300 });
+  const textoEntrada = () => (puedeDictar() ? 'Escribe o toca el micrófono' : 'Escribe lo que necesitas');
+  const entrada = h('input', { class: 'input', placeholder: textoEntrada(), 'aria-label': 'Pídele algo a Eco', maxlength: 300 });
   const mic = h('button', { type: 'button', class: 'mic', 'aria-label': 'Hablar con Eco' }, icono('mic'));
   const pendiente = h('div', { class: 'pila g8' });
   const opcionProyector = h('option', { value: 'proyector' }, 'Voz en el proyector');
@@ -31,7 +32,7 @@ export function montarEco(app, ctx) {
       h('button', { type: 'button', class: 'btn texto chico', 'aria-label': 'Cerrar Eco', onclick: () => alternar(false) }, icono('cerrar'))),
     log,
     h('footer', null, pendiente,
-      h('form', { class: 'eco-entrada', onsubmit: e => { e.preventDefault(); enviar(entrada.value); } }, hayDictado ? mic : null, entrada, h('button', { type: 'submit', class: 'btn chico', 'aria-label': 'Enviar a Eco' }, icono('enviar'))),
+      h('form', { class: 'eco-entrada', onsubmit: e => { e.preventDefault(); enviar(entrada.value); } }, puedeDictar() ? mic : null, entrada, h('button', { type: 'submit', class: 'btn chico', 'aria-label': 'Enviar a Eco' }, icono('enviar'))),
       destino));
   app.append(panel);
 
@@ -50,18 +51,26 @@ export function montarEco(app, ctx) {
     entrada.placeholder = 'Te escucho…';
     detener = dictar({
       espera: 2000,
+      sala: { codigo: ctx.codigo, token: ctx.token },
+      alEstado: t => { entrada.placeholder = t === 'Transcribiendo…' ? 'Transcribiendo…' : 'Te escucho…'; },
+      alNivel: n => mic.style.setProperty('--nivel', n.toFixed(2)),
       alParcial: t => { entrada.value = t; },
-      alFinal: t => { fin(); if (t) enviar(t); },
-      alError: c => { fin(); aviso(mensajeErrorVoz(c), 'error'); },
+      alFinal: t => { fin(); if (t) enviar(t); else aviso('No se escuchó nada. Habla cerca del micrófono.'); },
+      alError: (c, _, detalle) => { fin(); aviso(mensajeErrorVoz(c, detalle, 'escribe tu pedido'), 'error'); },
     });
   }
-  function fin() { detener = null; mic.classList.remove('escuchando'); entrada.placeholder = 'Escribe o toca el micrófono'; }
+  function fin() { detener = null; mic.classList.remove('escuchando'); mic.style.removeProperty('--nivel'); entrada.placeholder = textoEntrada(); }
+  vozLista.then(() => {
+    entrada.placeholder = textoEntrada();
+    if (puedeDictar() && !mic.isConnected) entrada.before(mic);
+  });
   mic.addEventListener('click', escuchar);
 
   async function enviar(texto) {
     texto = String(texto || '').trim();
     if (!texto || ocupado) return;
     ocupado = true;
+    boton.classList.add('pensando');
     entrada.value = '';
     dibujarLog(texto);
     try {
@@ -70,6 +79,7 @@ export function montarEco(app, ctx) {
       aviso(e.message, 'error');
     }
     ocupado = false;
+    boton.classList.remove('pensando');
     dibujarLog();
   }
 

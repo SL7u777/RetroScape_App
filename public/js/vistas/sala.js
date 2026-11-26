@@ -12,7 +12,7 @@ import { entrarASala } from './inicio.js';
 const AYUDA = {
   miembro: {
     colocacion: 'Elige la zona que mejor describe tu sprint: cima si fue bien, valle si tuvo altibajos, tormenta si fue difícil. Nadie ve tu posición hasta que se revela la de todos a la vez.',
-    comentarios: 'Escribe o dicta lo que pasó en el sprint. Antes de publicar, la IA te avisa si algo podría identificarte o señalar a alguien. Tú decides qué publicar.',
+    comentarios: 'Cuenta lo que pasó en el sprint, escribiendo o con el micrófono si tu navegador lo permite. Antes de publicar, la IA te avisa si algo podría identificarte o señalar a alguien. Tú decides qué publicar.',
     analisis: 'La IA agrupó los comentarios y quien facilita revisa el borrador. Pronto verás los temas y las acciones para votar.',
     votacion: 'Tienes 3 fichas. Ponlas en las acciones que más te importan, incluso varias en la misma. Nadie ve los votos hasta el cierre.',
     cierre: 'Las acciones con más fichas son las misiones del próximo sprint. Las demás quedan guardadas como ideas congeladas.',
@@ -68,6 +68,7 @@ export function vistaSala(app, codigo, tokenFacilitador) {
   let firmaPaisaje = '';
   let vioRevelacion = false;
   let reveladaAntes = null;
+  const numeros = [];
 
   const cabecera = h('header', { class: 'cabecera' });
   const pasos = h('nav', { class: 'pasos', 'aria-label': 'Fases de la retrospectiva' });
@@ -81,7 +82,10 @@ export function vistaSala(app, codigo, tokenFacilitador) {
   montar(app, h('div', { class: 'sala' }, cabecera, pasos, conexion,
     escenario));
   marco.append(velo);
+  franja.append(h('span', { class: 'esqueleto ficha-esq' }), h('span', { class: 'esqueleto texto-esq' }));
+  panel.append(h('div', { class: 'pila', 'aria-busy': 'true' }, h('span', { class: 'esqueleto alto', style: { width: '70%' } }), h('span', { class: 'esqueleto', style: { width: '90%' } }), h('span', { class: 'esqueleto', style: { width: '60%' } })));
 
+  let eco = null;
   const ctx = {
     codigo,
     token: cred.token,
@@ -93,30 +97,43 @@ export function vistaSala(app, codigo, tokenFacilitador) {
     refrescar: () => render(true),
   };
   ctx.compositor = crearCompositor(ctx);
-  let eco = null;
+  if (cred.rol === 'facilitador') eco = montarEco(app, ctx);
+  dibujarCabecera();
+  dibujarPasos();
 
   function dibujarCabecera() {
+    const listo = !!v;
     const copiar = h('button', { type: 'button', 'aria-label': `Copiar el código ${codigo}`, onclick: async () => {
       try { await navigator.clipboard.writeText(codigo); aviso('Código copiado'); } catch { aviso(`El código es ${codigo}`); }
     } }, icono('copiar'));
     montar(cabecera,
       h('a', { class: 'marca', href: '#/', title: 'Ir al inicio' }, h('img', { src: 'marca/icono.svg', alt: '' }), h('b', null, 'RetroScape')),
-      h('div', { class: 'titulo' }, h('h1', null, v.sala.equipo.nombre), h('span', null, `Sprint ${v.sala.sprint}, ${v.rol === 'facilitador' ? 'facilitas tú' : `facilita ${v.sala.facilitador}`}`)),
+      listo
+        ? h('div', { class: 'titulo' }, h('h1', null, v.sala.equipo.nombre), h('span', null, `Sprint ${v.sala.sprint}, ${v.rol === 'facilitador' ? 'facilitas tú' : `facilita ${v.sala.facilitador}`}`))
+        : h('div', { class: 'titulo', 'aria-busy': 'true' }, h('h1', { class: 'suave' }, 'Cargando la sala…'), h('span', null, h('span', { class: 'esqueleto', style: { width: '12em' } }, ' '))),
       h('div', { class: 'espacio' }),
-      h('span', { class: `chip ia${v.ia.simulado ? ' simulada' : ''}`, title: v.ia.simulado ? v.ia.motivo : `${v.ia.nombre}, ${v.ia.modelo}` }, icono('chispa'), v.ia.simulado ? 'IA simulada' : `IA: ${v.ia.nombre}`),
+      listo
+        ? h('span', { class: `chip ia${v.ia.simulado ? ' simulada' : ''}`, title: v.ia.simulado ? v.ia.motivo : `${v.ia.nombre}, ${v.ia.modelo}` }, icono('chispa'), h('span', { class: 'txt' }, v.ia.simulado ? 'IA simulada' : `IA: ${v.ia.nombre}`))
+        : h('span', { class: 'chip ia', 'aria-hidden': 'true' }, icono('chispa'), h('span', { class: 'txt' }, 'IA')),
       eco ? eco.boton : null,
       h('span', { class: 'codigo-sala' }, codigo, copiar),
-      h('a', { class: 'btn texto chico', href: '#/preferencias', 'aria-label': 'Preferencias' }, icono('ajustes')));
+      h('a', { class: 'btn texto chico ajustes', href: '#/preferencias', 'aria-label': 'Preferencias' }, icono('ajustes')));
+    cabecera.classList.toggle('con-eco', !!eco);
   }
 
   function dibujarPasos() {
-    const actual = v.sala.fase === 'cerrada' ? ORDEN.length : ORDEN.indexOf(v.sala.fase);
+    const fase = v?.sala.fase;
+    const actual = !fase ? -1 : fase === 'cerrada' ? ORDEN.length : ORDEN.indexOf(fase);
     montar(pasos, ORDEN.map((f, i) => h('div', { class: `paso${i < actual ? ' hecho' : ''}${i === actual ? ' actual' : ''}`, 'aria-current': i === actual ? 'step' : null },
-      h('i', null, i < actual ? '✓' : i + 1), h('span', { class: 'etq' }, NOMBRES[f]))),
-      v.sala.fase === 'cerrada' ? h('div', { class: 'paso actual', 'aria-current': 'step' }, h('i', null, '✓'), h('span', { class: 'etq' }, 'Retro cerrada')) : null);
+      h('i', { 'aria-hidden': 'true' }, i < actual ? '✓' : i + 1),
+      h('span', { class: 'etq' }, h('span', { class: i === actual ? 'paso-de' : 'sr' }, `Paso ${i + 1} de ${ORDEN.length}: `), NOMBRES[f], i < actual ? h('span', { class: 'sr' }, ', hecho') : null))),
+      fase === 'cerrada' ? h('div', { class: 'paso actual', 'aria-current': 'step' }, h('i', null, '✓'), h('span', { class: 'etq' }, 'Retro cerrada')) : null);
+    if (pasos.scrollWidth > pasos.clientWidth + 1) pasos.setAttribute('tabindex', '0'); else pasos.removeAttribute('tabindex');
+    if (!fase) return;
     const el = pasos.querySelector('.actual');
-    if (el && pasos.dataset.fase !== v.sala.fase) {
-      pasos.dataset.fase = v.sala.fase;
+    if (el && pasos.dataset.fase !== fase) {
+      if (pasos.dataset.fase) el.classList.add('nuevo');
+      pasos.dataset.fase = fase;
       pasos.scrollLeft = el.offsetLeft - (pasos.clientWidth - el.offsetWidth) / 2;
     }
   }
@@ -136,7 +153,7 @@ export function vistaSala(app, codigo, tokenFacilitador) {
     if (animar) vioRevelacion = true;
     const svgPaisaje = paisaje({
       avatares, distribucion: v.distribucion, revelada: v.revelada, interactivo: colocando, elegida, silueta: anterior?.zona, compacto, misiones,
-      animar, alElegir: zona => { local.seleccion = zona; render(true); },
+      animar, alElegir: zona => { local.seleccion = zona; local.elegidaEn = Date.now(); render(true); },
       titulo: v.revelada ? `Paisaje revelado: ${resumenDistribucion(v.distribucion)}` : 'Paisaje del equipo. Las posiciones se revelan a la vez.',
     });
     marco.querySelector('svg')?.remove();
@@ -187,6 +204,14 @@ export function vistaSala(app, codigo, tokenFacilitador) {
         v.rol === 'facilitador' ? panelFacilitador(ctx) : panelMiembro(ctx),
       ]);
       direccionSala().then(d => panel.querySelectorAll('.direccion').forEach(el => { el.textContent = d; }));
+      if (panel.dataset.fase !== v.sala.fase) {
+        if (panel.dataset.fase) { panel.classList.add('entra'); clearTimeout(panel.salida); panel.salida = setTimeout(() => panel.classList.remove('entra'), 800); }
+        panel.dataset.fase = v.sala.fase;
+      }
+      panel.querySelectorAll('.gran-numero').forEach((el, i) => {
+        if (numeros[i] !== undefined && numeros[i] !== el.textContent) el.classList.add('late');
+        numeros[i] = el.textContent;
+      });
     }
     eco?.actualizar(v);
   }

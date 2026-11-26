@@ -1,5 +1,7 @@
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import zlib, { brotliCompressSync, gzipSync } from 'node:zlib';
 import { extname, resolve, sep } from 'node:path';
 import { networkInterfaces } from 'node:os';
 import { config, RAIZ } from './config.js';
@@ -8,6 +10,7 @@ import * as S from './salas.js';
 import { suscribir, emitir, cerrarParticipante } from './eventos.js';
 import { revisar as revisarGuardian } from './ia/guardian.js';
 import { infoIA } from './ia/gateway.js';
+import { transcribir, ErrorTranscripcion } from './ia/transcripcion.js';
 
 cargar();
 S.alCambiar(emitir);
@@ -15,22 +18,36 @@ setInterval(S.revisarTiempos, 1000).unref();
 
 const PUBLICO = resolve(RAIZ, 'public');
 const direccionesRed = () => Object.values(networkInterfaces()).flat().filter(i => i && i.family === 'IPv4' && !i.internal).map(i => i.address);
-const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+const TIPOS = { '.woff2': 'font/woff2', '.webp': 'image/webp', '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
 
 function enviar(res, status, cuerpo) {
   res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(cuerpo));
 }
 
-async function leerJSON(req) {
+async function leerCuerpo(req, max) {
   let total = 0;
   const partes = [];
   for await (const p of req) {
     total += p.length;
-    if (total > 64 * 1024) throw new S.ErrorSala('La solicitud es demasiado grande', 413);
+    if (total > max) throw new S.ErrorSala('La solicitud es demasiado grande', 413);
     partes.push(p);
   }
-  try { return partes.length ? JSON.parse(Buffer.concat(partes).toString('utf8')) : {}; } catch { throw new S.ErrorSala('Formato inválido'); }
+  return Buffer.concat(partes);
+}
+
+async function leerJSON(req) {
+  const cuerpo = await leerCuerpo(req, 64 * 1024);
+  try { return cuerpo.length ? JSON.parse(cuerpo.toString('utf8')) : {}; } catch { throw new S.ErrorSala('Formato inválido'); }
+}
+
+const usoVoz = new Map();
+function controlarVoz(clave) {
+  const ahora = Date.now();
+  const lista = (usoVoz.get(clave) || []).filter(t => ahora - t < 10 * 60000);
+  if (lista.length >= 40) throw new S.ErrorSala('Usaste mucho el dictado en poco tiempo. Espera unos minutos o escribe.', 429);
+  lista.push(ahora);
+  usoVoz.set(clave, lista);
 }
 
 const intentos = new Map();
@@ -94,7 +111,7 @@ async function api(req, res, url) {
 
   if (req.method === 'POST' && ruta === '/api/salas') return enviar(res, 201, S.crearSala(await leerJSON(req)));
 
-  m = ruta.match(/^\/api\/salas\/([A-Za-z0-9-]+)\/(unirse|eventos|vista|accion|guardian|eco|acta\.md)$/);
+  m = ruta.match(/^\/api\/salas\/([A-Za-z0-9-]+)\/(unirse|eventos|vista|accion|guardian|eco|transcribir|acta\.md)$/);
   if (!m) throw new S.ErrorSala('Ruta no encontrada', 404);
   const [, codigo, op] = m;
 
@@ -108,6 +125,21 @@ async function api(req, res, url) {
   }
 
   const sala = S.obtener(codigo);
+  if (op === 'transcribir' && req.method === 'POST') {
+    const { rol, participante } = S.autenticar(sala, url.searchParams.get('token'));
+    if (rol === 'proyector') throw new S.ErrorSala('El proyector no dicta', 403);
+    const tipo = String(req.headers['content-type'] || '').split(';')[0].trim();
+    if (!tipo.startsWith('audio/')) throw new S.ErrorSala('Formato de audio no válido', 415);
+    controlarVoz(participante?.id || 'facilitador-' + sala.codigo);
+    const audio = await leerCuerpo(req, 4 * 1024 * 1024);
+    if (audio.length < 800) return enviar(res, 200, { texto: '' });
+    try {
+      return enviar(res, 200, { texto: await transcribir(audio, tipo) });
+    } catch (e) {
+      if (e instanceof ErrorTranscripcion) throw new S.ErrorSala(e.message, 502);
+      throw e;
+    }
+  }
   const d = req.method === 'POST' ? await leerJSON(req) : {};
   const { rol, participante } = S.autenticar(sala, d.token || url.searchParams.get('token'));
 
@@ -138,19 +170,48 @@ async function api(req, res, url) {
   throw new S.ErrorSala('Ruta no encontrada', 404);
 }
 
+// Archivos públicos comprimidos una vez y servidos con ETag: el navegador revalida y recibe 304 si no cambiaron
+const cacheEstatico = new Map();
+const COMPRIMIBLE = new Set(['.html', '.js', '.css', '.json', '.webmanifest', '.svg']);
+
+async function cargarEstatico(archivo) {
+  const info = await stat(archivo);
+  if (!info.isFile()) throw new Error('No es un archivo');
+  const previo = cacheEstatico.get(archivo);
+  if (previo && previo.mtime === info.mtimeMs) return previo;
+  const cuerpo = await readFile(archivo);
+  const comprimible = COMPRIMIBLE.has(extname(archivo)) && cuerpo.length > 1024;
+  const entrada = {
+    mtime: info.mtimeMs,
+    etag: `"${createHash('sha1').update(cuerpo).digest('base64url').slice(0, 20)}"`,
+    cuerpo,
+    br: comprimible ? brotliCompressSync(cuerpo, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 9 } }) : null,
+    gzip: comprimible ? gzipSync(cuerpo, { level: 9 }) : null,
+  };
+  cacheEstatico.set(archivo, entrada);
+  return entrada;
+}
+
 async function estatico(req, res, url) {
-  let ruta = decodeURIComponent(url.pathname);
+  let ruta;
+  try { ruta = decodeURIComponent(url.pathname); } catch { res.writeHead(400); return res.end(); }
   if (ruta.endsWith('/')) ruta += 'index.html';
   const archivo = resolve(PUBLICO, '.' + ruta);
   if (!archivo.startsWith(PUBLICO + sep)) { res.writeHead(403); return res.end(); }
-  try {
-    const cuerpo = await readFile(archivo);
-    res.writeHead(200, { 'Content-Type': TIPOS[extname(archivo)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache' });
-    res.end(cuerpo);
-  } catch {
+  let e;
+  try { e = await cargarEstatico(archivo); } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    res.end('No encontrado');
+    return res.end('No encontrado');
   }
+  const cabeceras = { 'Content-Type': TIPOS[extname(archivo)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': /\.(woff2|png)$/.test(archivo) ? 'public, max-age=604800' : 'no-cache', ETag: e.etag, Vary: 'Accept-Encoding' };
+  if (req.headers['if-none-match'] === e.etag) { res.writeHead(304, cabeceras); return res.end(); }
+  const acepta = String(req.headers['accept-encoding'] || '');
+  let cuerpo = e.cuerpo;
+  if (e.br && /\bbr\b/.test(acepta)) { cuerpo = e.br; cabeceras['Content-Encoding'] = 'br'; }
+  else if (e.gzip && /\bgzip\b/.test(acepta)) { cuerpo = e.gzip; cabeceras['Content-Encoding'] = 'gzip'; }
+  cabeceras['Content-Length'] = cuerpo.length;
+  res.writeHead(200, cabeceras);
+  res.end(req.method === 'HEAD' ? undefined : cuerpo);
 }
 
 createServer(async (req, res) => {

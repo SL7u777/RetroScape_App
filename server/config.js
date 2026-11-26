@@ -33,6 +33,11 @@ export const config = {
   proveedorPedido: (process.env.IA_PROVEEDOR || '').toLowerCase(),
   gemini: { key: geminiKey, modelo: process.env.GEMINI_MODEL || 'gemini-3.8-flash' },
   groq: { key: groqKey, modelo: process.env.GROQ_MODEL || 'openai/gpt-oss-120b' },
+  transcripcion: {
+    key: groqKey,
+    modelo: process.env.GROQ_WHISPER_MODEL || 'whisper-large-v3-turbo',
+    url: process.env.GROQ_TRANSCRIPCION_URL || 'https://api.groq.com/openai/v1/audio/transcriptions',
+  },
   timeoutIA: Number(process.env.IA_TIMEOUT_MS) || 45000,
   archivoDatos: process.env.RETROSCAPE_DATOS || RAIZ + 'data/retroscape.json',
 };

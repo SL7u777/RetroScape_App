@@ -66,7 +66,7 @@ Para que el equipo entre desde cualquier red, con HTTPS (necesario para el dicta
 
 1. Sube el repositorio a GitHub (incluye `render.yaml`).
 2. En Render: *New → Blueprint*, elige el repositorio y confirma.
-3. Cuando lo pida, pega la clave en `GROQ_API_KEY`. Para usar Gemini, cambia `IA_PROVEEDOR` a `gemini` y agrega `GEMINI_API_KEY`.
+3. Cuando lo pida, pega la clave en `GROQ_API_KEY`. Para usar Gemini, cambia `IA_PROVEEDOR` a `gemini` y agrega `GEMINI_API_KEY`. La clave de Groq también activa la transcripción de voz en el servidor para Firefox, Edge y otros navegadores sin dictado propio; sin ella, esos navegadores muestran solo el campo de texto.
 4. Al terminar el despliegue, Render muestra la dirección `https://retroscape-xxxx.onrender.com`. Ábrela en la laptop, crea la sala desde ahí y el equipo entra con esa misma dirección.
 
 El plan gratuito apaga el servicio tras 15 minutos sin tráfico y la primera carga posterior tarda cerca de un minuto, así que conviene abrir la dirección unos minutos antes de empezar. Las salas se guardan en el disco del servicio, que se borra al reiniciarse: el historial del Equipo Atlas vuelve a cargarse, pero una sala creada antes de un apagado se pierde.

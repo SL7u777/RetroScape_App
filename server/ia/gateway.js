@@ -6,6 +6,10 @@ import * as simulado from './proveedores/simulado.js';
 const ADAPTADORES = { gemini, groq };
 
 export function infoIA() {
+  return { ...infoProveedor(), transcripcion: !!config.transcripcion.key };
+}
+
+function infoProveedor() {
   const p = config.proveedor;
   if (p === 'simulado') {
     const motivo = config.proveedorPedido && config.proveedorPedido !== 'simulado'
